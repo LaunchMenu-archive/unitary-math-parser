@@ -1,0 +1,43 @@
+{
+    "name": "unitary-math-parser",
+    "version": "1.0.0",
+    "description": "A math parser and evaluator that can deal with units",
+    "main": "build/index.js",
+    "types": "build/index.d.ts",
+    "files": [
+        "build/**/*.{js,d.ts}"
+    ],
+    "scripts": {
+        "watch": "tsc -w",
+        "build": "tsc",
+        "test": "node --inspect-brk build/index.js",
+        "start": "node build/index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/TarVK/model-react.git"
+    },
+    "keywords": [
+        "math",
+        "parser",
+        "units"
+    ],
+    "author": "Tar van Krieken",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/TarVK/model-react/issues"
+    },
+    "homepage": "https://github.com/TarVK/model-react#readme",
+    "devDependencies": {
+        "@types/uuid": "^8.3.1",
+        "ts-loader": "^6.0.2",
+        "typescript": "^4.0.2",
+        "webpack": "^4.32.2",
+        "webpack-cli": "^3.3.2",
+        "webpack-dev-server": "^3.5.0"
+    },
+    "dependencies": {
+        "chevrotain": "^9.0.2",
+        "uuid": "^8.3.2"
+    }
+}
