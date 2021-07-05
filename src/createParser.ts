@@ -1,7 +1,6 @@
 import {CSTParser} from "./parser/CST/CSTParser";
 import {ICST} from "./_types/CST/ICST";
 import {IASTBase} from "./_types/AST/IASTBase";
-import {TMakeASTRecursive} from "./_types/AST/TMakeASTRecursive";
 import {IParser} from "./_types/IParser";
 import {IParserConfig} from "./_types/IParserConfig";
 import {createASTParser} from "./parser/AST/createASTParser";

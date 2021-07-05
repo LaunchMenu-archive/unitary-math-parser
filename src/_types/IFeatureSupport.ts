@@ -4,6 +4,7 @@ import {TGetConversionTree} from "./CST/TGetConversionTree";
 import {IFeatureSyntax} from "./IFeatureSyntax";
 import {IUsedTokenTypes} from "./IUsedTokenTypes";
 import {IRuleData} from "./CST/IRuleData";
+import {ICSTParseInit} from "./CST/ICSTParseInit";
 
 export type IFeatureSupport<T extends IFeatureSyntax = IFeatureSyntax> = {
     /** The name of the supporting rule */
@@ -22,7 +23,7 @@ export type IFeatureSupport<T extends IFeatureSyntax = IFeatureSyntax> = {
         exec(data: IRuleData): ICST;
         /** The supporting rules that are used by the rule */
         supports?: IFeatureSupport[];
-    };
+    } & ICSTParseInit;
     /**
      * Transforms the concrete syntax tree to an abstract syntax tree node
      * @param tree The concrete syntax tree node to transform

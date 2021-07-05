@@ -1,5 +1,6 @@
 import {
     EmbeddedActionsParser,
+    isRecognitionException,
     IToken,
     Lexer,
     SubruleMethodOpts,
@@ -18,11 +19,14 @@ import {getFeatureSupports} from "../getFeatureSupports";
 import {createCSTNodeCreator} from "./createCSTNodeCreator";
 import {IRuleData} from "../../_types/CST/IRuleData";
 import {createCSTLeaf} from "./createCSTLeaf";
+import {ICSTParseInit} from "../../_types/CST/ICSTParseInit";
+import {ICSTDataIdentifier} from "../_types/ICSTDataIdentifier";
 
 let tokenList: TokenType[];
 export class CSTParser extends EmbeddedActionsParser {
     /** The configuration of the parser */
     protected config: IParserConfig;
+    protected inits: ICSTParseInit[];
 
     /** The rules for the different precedence levels */
     protected precedenceRules: {
@@ -35,6 +39,9 @@ export class CSTParser extends EmbeddedActionsParser {
 
     /** The lexer to tokenize the input */
     protected lexer: Lexer;
+
+    /** Additional data that rules can use to keep track of things */
+    protected trackingData: Record<symbol, any> = {};
 
     /**
      * Creates a new parser
@@ -56,11 +63,24 @@ export class CSTParser extends EmbeddedActionsParser {
      * @returns Th concrete syntax tree
      */
     public parse(text: string): ICST {
-        const {tokens} = this.lexer.tokenize(text);
-        this.input = tokens;
+        // Tokenize
+        this.trackingData = {};
+        const {tokens, errors} = this.lexer.tokenize(text);
 
+        // Init parser
+        const initData = {parser: this as any, tokens, input: text};
+        const finalTokens = this.inits.reduce((current, {init}) => {
+            const newTokens = init?.(current);
+            return newTokens ? {...current, tokens: newTokens} : current;
+        }, initData).tokens;
+
+        this.input = finalTokens;
+
+        // Parse
         const result = this.expression();
-        console.log(this.errors);
+        console.log([...this.errors, ...errors]);
+        console.log(result);
+        debugger;
         return result;
     }
 
@@ -68,11 +88,18 @@ export class CSTParser extends EmbeddedActionsParser {
      * Converts the parser config the the proper parser structure
      */
     protected createStaticStructure() {
-        // Extract the supporting rules
-        const featureSupports = this.getSupportRules([
+        // Get all initializables
+        const featureSupports = getFeatureSupports(this.config);
+        this.inits = [
             ...this.config.baseFeatures,
             ...this.config.features,
-        ]);
+            ...featureSupports,
+        ]
+            .map(({parse}) => parse.init)
+            .filter(init => init)
+            .map(init => ({init}));
+
+        // Extract the supporting rules
         featureSupports.forEach(({id, name, parse: {exec}}, i) => {
             const supportRuleData: IRuleData = {
                 parser: this as any,
@@ -134,12 +161,26 @@ export class CSTParser extends EmbeddedActionsParser {
                 const fallThrough = {
                     ALT: () => this.subrule(prefixOptionRules.length, nextRule),
                 };
+                const shouldFallThrough = !prefix.some(
+                    ({parse: {type}}) => type == "prefixBase"
+                );
                 prefixRule = this.RULE(`p${index}-prefix`, () => {
                     const options = prefixOptionRules.map((rule, i) => ({
                         ALT: () => this.subrule(i, rule),
                     }));
-                    return this.OR([...options, fallThrough]);
+                    return this.OR(
+                        shouldFallThrough ? [...options, fallThrough] : options
+                    );
                 });
+
+                if (suffix.length == 0) {
+                    // Return the precedence rules data
+                    rules.push(prefixRule);
+                    return {
+                        features: {prefix, suffix},
+                        rule: prefixRule,
+                    };
+                }
             }
 
             // Create the suffix rule
@@ -174,29 +215,6 @@ export class CSTParser extends EmbeddedActionsParser {
                 rule: suffixRule,
             };
         });
-    }
-
-    /**
-     * Retrieves all feature supports
-     * @param features The features to obtain the supports from
-     * @returns The feature supports list
-     */
-    protected getSupportRules(features: ISupportable[]): IFeatureSupport[] {
-        const stack: ISupportable[] = [...features];
-
-        const allSupports: Map<string, IFeatureSupport> = new Map();
-
-        while (stack.length > 0) {
-            const supportable = stack.pop();
-            const supports = supportable!.parse.supports ?? [];
-            for (let support of supports)
-                if (!allSupports.has(support.id)) {
-                    allSupports.set(support.id, support);
-                    stack.push(support);
-                }
-        }
-
-        return [...allSupports.values()];
     }
 
     /**
@@ -294,7 +312,8 @@ export class CSTParser extends EmbeddedActionsParser {
             }
 
             // Add the feature to the layer
-            const list = layer[parse.type];
+            const type = parse.type == "prefixBase" ? "prefix" : parse.type;
+            const list = layer[type];
             const relativeIndex =
                 relativeTo && list.findIndex(({name}) => relativeTo?.name);
             const index = relativeIndex ? (after ? 1 : 0) + relativeIndex : 0;
@@ -312,6 +331,7 @@ export class CSTParser extends EmbeddedActionsParser {
         this.SUBRULE(this.precedenceRules[this.precedenceRules.length - 1].rule)
     );
 
+    // Extra functions to be used by rules
     /**
      * Calls the given support rule
      * @param idx The index of the support rule (every call should have a unique index)
@@ -324,10 +344,93 @@ export class CSTParser extends EmbeddedActionsParser {
         ruleToCall: IFeatureSupport,
         options?: SubruleMethodOpts
     ): ICST {
-        const rule = this.supportRules.get(ruleToCall.id);
+        return this.subrule(idx, this.getSupportRule(ruleToCall), options);
+    }
+
+    /**
+     * Retrieves the rule for a given feature support
+     * @param support The feature support to obtain the chevrotain rule for
+     * @returns The obtained rule
+     */
+    protected getSupportRule(support: IFeatureSupport): (...args: any[]) => ICST {
+        const rule = this.supportRules.get(support.id);
         if (!rule)
-            throw Error(`Requested support rule "${ruleToCall.name}" wasn't provided`);
-        return this.subrule(idx, rule, options);
+            throw Error(`Requested support rule "${support.name}" wasn't provided`);
+        return rule;
+    }
+
+    /**
+     * Creates a function that will try whether a given rule succeeds from this location
+     * @param grammarRule The rule to try and parse in backtracking mode.
+     * @param args argument to be passed to the grammar rule execution
+     *
+     * @return a lookahead function that will try to parse the given grammarRule and will return true if succeed.
+     */
+    protected backtrack<T>(
+        grammarRule: (...args: any[]) => T,
+        args?: any[]
+    ): () => boolean {
+        this.LA;
+        return this.BACKTRACK(grammarRule, args);
+    }
+
+    /**
+     * Tries a given grammar rule and returns its result if successful and undefined otherwise
+     * @param grammarRule The rule to be tried
+     * @param data Additional data for trying the rule
+     * @returns The result (or null if unsuccessful) and a function to revert the state
+     */
+    protected tryRule<T>(
+        this: any,
+        grammarRule: (...args: any[]) => T,
+        {
+            args,
+            transformTokens,
+        }: {
+            /** The arguments to pass to the rule */
+            args?: any[];
+            /**
+             * Transforms the current tokens to a new set of tokens to be used during parsing
+             * @param tokens The current tokens to be transformed
+             * @param currentIndex The current token index
+             * @returns The newly obtained tokens
+             */
+            transformTokens?(tokens: IToken[], currentIndex: number): IToken[];
+        } = {}
+    ): {revert: () => void; result: T | null} {
+        // See: https://github.com/Chevrotain/chevrotain/blob/e6c1f2a600ac0a31384b426ea6591c480c4a4b91/packages/chevrotain/src/parse/parser/traits/recognizer_api.ts#L683
+        // save org state
+        this.isBackTrackingStack.push(1);
+        const orgState = this.saveRecogState();
+        const oldTokens = this.input;
+        const revert = () => {
+            this.reloadRecogState(orgState);
+            this.isBackTrackingStack.pop();
+            this.input = oldTokens;
+        };
+
+        if (transformTokens) this.input = transformTokens(oldTokens, this.curIdx);
+
+        try {
+            return {result: grammarRule.apply(this, args), revert};
+        } catch (e) {
+            if (isRecognitionException(e)) {
+                return {result: null, revert};
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Retrieves the persistent data corresponding to some identifier
+     * @param id The data identifier
+     * @returns The data that can be modified
+     */
+    protected getData<T extends object>(id: ICSTDataIdentifier<T>): T {
+        let data = (this.trackingData as any)[id.id as any];
+        if (!data) data = (this.trackingData as any)[id.id as any] = id.init();
+        return data;
     }
 }
 

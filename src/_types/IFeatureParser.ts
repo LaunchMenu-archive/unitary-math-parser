@@ -1,4 +1,5 @@
 import {ICST} from "./CST/ICST";
+import {ICSTParseInit} from "./CST/ICSTParseInit";
 import {IFeatureRuleData} from "./CST/IFeatureRuleData";
 import {IBaseFeature} from "./IBaseFeature";
 import {IFeature} from "./IFeature";
@@ -22,7 +23,7 @@ export type IFeatureParserSuffix = IFeatureParserBase & {
 
 export type IFeatureParserPrefix = IFeatureParserBase & {
     /** The type of the operator */
-    type: "prefix";
+    type: "prefix" | "prefixBase"; // Prefix base removes the fallthrough case of the prefix
     /**
      * Executes the rule
      * @param data The additional data the rule can use
@@ -48,7 +49,7 @@ export type IFeatureParserBase = {
               /** Specifies to try and match this feature after the one it has the same precedence to (in case there is overlap between the syntax they match) */
               matchAfter?: boolean;
           };
-};
+} & ICSTParseInit;
 
 export type IFeaturePrecedenceTarget =
     | IFeature<IFeatureSyntax>

@@ -9,10 +9,26 @@ import {
     SubruleMethodOpts,
     TokenType,
 } from "chevrotain";
+import {ICSTDataIdentifier} from "../parser/_types/ICSTDataIdentifier";
 import {ICST} from "./CST/ICST";
 import {IFeatureSupport} from "./IFeatureSupport";
 
 export type IParserOps = {
+    /**
+     * Look-Ahead for the Token Vector
+     * LA(1) is the next Token ahead.
+     * LA(n) is the nth Token ahead.
+     * LA(0) is the previously consumed Token.
+     *
+     * Looking beyond the end of the Token Vector or before its begining
+     * will return in an IToken of type EOF {@link EOF}.
+     * This behavior can be used to avoid infinite loops.
+     *
+     * This is often used to implement custom lookahead logic for GATES.
+     * https://chevrotain.io/docs/features/gates.html
+     */
+    LA(howMuch: number): IToken;
+
     /**
      *
      * A Parsing DSL method use to consume a single Token.
@@ -243,7 +259,52 @@ export type IParserOps = {
     ): ICST;
 
     /**
+     * Retrieves the rule for a given feature support
+     * @param support The feature support to obtain the chevrotain rule for
+     * @returns The obtained rule
+     */
+    getSupportRule(support: IFeatureSupport): (...args: any[]) => ICST;
+
+    /**
+     * Creates a function that will try whether a given rule succeeds from this location
+     * @param grammarRule The rule to try and parse in backtracking mode.
+     * @param args argument to be passed to the grammar rule execution
+     *
+     * @return a lookahead function that will try to parse the given grammarRule and will return true if succeed.
+     */
+    backtrack<T>(grammarRule: (...args: any[]) => T, args?: any[]): () => boolean;
+
+    /**
+     * Tries a given grammar rule and returns its result if successful and undefined otherwise
+     * @param grammarRule The rule to be tried
+     * @param data Additional data for trying the rule
+     * @returns The result (or null if unsuccessful) and a function to revert the state
+     */
+    tryRule<T>(
+        this: any,
+        grammarRule: (...args: any[]) => T,
+        data?: {
+            /** The arguments to pass to the rule */
+            args?: any[];
+            /**
+             * Transforms the current tokens to a new set of tokens to be used during parsing
+             * @param tokens The current tokens to be transformed
+             * @param currentIndex The current token index
+             * @returns The newly obtained tokens
+             */
+            transformTokens?(tokens: IToken[], currentIndex: number): IToken[];
+        }
+    ): {revert: () => void; result: T | null};
+
+    /**
      * The top level expression rule
      */
     expression: (idx: number) => ICST;
+
+    /**
+     * Retrieves the persistent data corresponding to some identifier
+     * @param id The data identifier
+     * @returns The data that can be modified
+     */
+    getData<T extends object>(id: ICSTDataIdentifier<T>): T;
 };

@@ -26,7 +26,7 @@ export function createASTParser<T extends IFeatureSyntax>(
     // Retrieve  the abstraction functions
     const abstractionFuncs = new Map<
         string,
-        {(tree: ICSTConversionNode, source: ICST): Omit<IASTBase, "type">}
+        {(tree: ICSTConversionNode, source: ICST): Omit<IASTBase, "type" | "source">}
     >();
     config.baseFeatures.forEach(feature => {
         abstractionFuncs.set(feature.name, feature.abstract as any);
@@ -53,7 +53,7 @@ export function createASTParser<T extends IFeatureSyntax>(
                 `Was unable to create a AST node for CST node of type "${tree.type}"`
             );
 
-        return {...abstract(conversionNode, tree), type: tree.type};
+        return {type: tree.type, source: tree, ...abstract(conversionNode, tree)};
     }
 
     // Return the recursive conversion function

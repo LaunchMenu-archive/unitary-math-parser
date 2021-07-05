@@ -3,6 +3,7 @@ import {ICST} from "./CST/ICST";
 import {IFeatureSyntax} from "./IFeatureSyntax";
 import {IASTBase} from "./AST/IASTBase";
 import {TGetConversionTree} from "./CST/TGetConversionTree";
+import {ICSTParseInit} from "./CST/ICSTParseInit";
 
 export type IFeature<T extends IFeatureSyntax = IFeatureSyntax> = {
     /** The name of the feature */
