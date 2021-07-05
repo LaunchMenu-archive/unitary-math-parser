@@ -8,6 +8,8 @@ import {addFeature} from "./addFeature";
 import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
 
 export const leftBracketRecoveryToken = createToken({name: "LEFT-BRACKET-RECOVERY"});
+const createRecoveryToken = (i: number) =>
+    createTokenInstance(leftBracketRecoveryToken, "(", i, i, i, i, i, i);
 
 export const groupRecoveryBaseFeature = createBaseFeature<{
     CST: [ICSTLeaf, IASTRecursive, ICSTLeaf];
@@ -48,53 +50,34 @@ export const groupRecoveryFeature = createFeature<{
         exec({parser, nextRule}) {
             const rd = parser.getData(recoveryData);
             if (rd.topLevel) {
-                try {
-                    rd.topLevel = false;
+                // If we're at the top level, not in a recursion, try adding `(` brackets as long as we finish on a `)` bracket
+                rd.topLevel = false;
 
-                    // Try parsing the subtree as normal
-                    const regularResult = parser.tryRule(nextRule);
-                    if (
-                        regularResult.result &&
-                        parser.LA(1).tokenType != rightBracketToken
-                    )
-                        return regularResult.result;
+                // While the next token after parsing failed is `)` add a recovery `(` to the start
+                for (let recoveryCount = 0; ; recoveryCount++) {
+                    const result = parser.tryRule(nextRule, {
+                        transformTokens: (tokens, i) => {
+                            if (recoveryCount == 0) return tokens;
 
-                    // If this fails, revert the progress made so far
-                    regularResult.revert();
+                            const tok = createRecoveryToken(i);
+                            return [
+                                ...tokens.slice(0, i + 1),
+                                ...new Array(recoveryCount).fill(tok),
+                                ...tokens.slice(i + 1),
+                            ];
+                        },
+                    });
 
-                    // While the next token after parsing failed is `)` add a recovery `(` to the start
-                    let recoveryCount = 0;
-                    while (true) {
-                        recoveryCount++;
-                        const result = parser.tryRule(nextRule, {
-                            transformTokens: (tokens, i) => {
-                                const tok = createTokenInstance(
-                                    leftBracketRecoveryToken,
-                                    "(",
-                                    i,
-                                    i,
-                                    i,
-                                    i,
-                                    i,
-                                    i
-                                );
-                                return [
-                                    ...tokens.slice(0, i + 1),
-                                    ...new Array(recoveryCount).fill(tok),
-                                    ...tokens.slice(i + 1),
-                                ];
-                            },
-                        });
+                    // If the next token is not a closing bracket, we don't need to add an opening bracket anymore
+                    if (parser.LA(1).tokenType != rightBracketToken)
+                        return result.result as any;
 
-                        if (result.result && parser.LA(1).tokenType != rightBracketToken)
-                            return result.result;
-
-                        result.revert();
-                        if (!result.result) break;
-                    }
-                } finally {
-                    rd.topLevel = true;
+                    // Revert the previous attempt
+                    result.revert();
+                    if (!result.result) break; // If parsing so far failed, adding more brackets won't fix it
                 }
+
+                rd.topLevel = true;
             }
 
             // If everything failed, return the parsed result as normal

@@ -19,7 +19,7 @@ const parse = createParser({
         groupRecoveryBaseFeature,
     ],
 });
-const result = parse("$4)+max(4*2)+5)");
+const result = parse("$4)+max(4*2,4))++5)");
 const tree = result.parse();
 if (tree.type == "function") {
     const arg = tree.args[0];
@@ -28,5 +28,5 @@ if (tree.type == "function") {
 console.log(tree);
 debugger;
 
-const result2 = parse("$4+max(4*2)+5").parse();
-console.log(result2);
+// const result2 = parse("$4+max(4*2)+5").parse();
+// console.log(result2);
