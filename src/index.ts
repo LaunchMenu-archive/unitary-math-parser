@@ -19,7 +19,7 @@ const parser = new Parser({
         groupRecoveryBaseFeature,
     ],
 });
-const result = parser.parse("$4)+max(4*2,4))++5)");
+const result = parser.parse("$4)+max(4*2,4))+5(");
 if ("errors" in result) {
     console.log(...result.errors.map(({multilineMessage}) => multilineMessage));
 } else {

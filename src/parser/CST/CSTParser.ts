@@ -555,13 +555,21 @@ export class CSTParser extends EmbeddedActionsParser {
         const revert = () => {
             this.reloadRecogState(orgState);
             this.isBackTrackingStack.pop();
-            this.input = oldTokens;
+
+            if (transformTokens) {
+                this.tokVector = oldTokens;
+                this.tokVectorLength = oldTokens.length;
+            }
         };
 
-        if (transformTokens) this.input = transformTokens(oldTokens, this.curIdx);
+        if (transformTokens) {
+            this.tokVector = transformTokens(oldTokens, this.curIdx);
+            this.tokVectorLength = this.tokVector.length;
+        }
 
         try {
-            return {result: grammarRule.apply(this, args), revert};
+            const res = {result: grammarRule.apply(this, args), revert};
+            return res;
         } catch (e) {
             if (isRecognitionException(e)) {
                 return {result: null, revert};
