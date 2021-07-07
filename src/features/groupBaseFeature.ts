@@ -1,14 +1,22 @@
 import {createToken} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
-import {IASTRecursive} from "../_types/AST/IASTRecursive";
+import {IASTExpression} from "../_types/AST/IASTExpression";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 
-export const leftBracketToken = createToken({name: "LEFT-BRACKET", pattern: /\(/});
-export const rightBracketToken = createToken({name: "RIGHT-BRACKET", pattern: /\)/});
+export const leftBracketToken = createToken({
+    name: "LEFT-BRACKET",
+    pattern: /\(/,
+    label: '"("',
+});
+export const rightBracketToken = createToken({
+    name: "RIGHT-BRACKET",
+    pattern: /\)/,
+    label: '")"',
+});
 
 export const groupBaseFeature = createBaseFeature<{
-    CST: [ICSTLeaf, IASTRecursive, ICSTLeaf];
-    AST: IASTRecursive;
+    CST: [ICSTLeaf, IASTExpression, ICSTLeaf];
+    AST: IASTExpression;
     name: "group";
 }>({
     name: "group",

@@ -1,14 +1,14 @@
 import {createToken} from "chevrotain";
 import {createFeature} from "../createFeature";
-import {IASTRecursive} from "../_types/AST/IASTRecursive";
+import {IASTExpression} from "../_types/AST/IASTExpression";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {addFeature} from "./addFeature";
 import {multiplyFeature} from "./multiplyFeature";
 
-export const prefixToken = createToken({name: "prefix", pattern: /\$/});
+export const prefixToken = createToken({name: "PREFIX", pattern: /\$/, label: '"$"'});
 export const prefixFeature = createFeature<{
-    CST: [ICSTLeaf, IASTRecursive];
-    AST: {val: IASTRecursive};
+    CST: [ICSTLeaf, IASTExpression];
+    AST: {val: IASTExpression};
     name: "prefix";
 }>({
     name: "prefix",

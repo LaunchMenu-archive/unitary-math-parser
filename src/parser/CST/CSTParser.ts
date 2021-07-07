@@ -1,5 +1,7 @@
 import {
     EmbeddedActionsParser,
+    EOF,
+    IParserErrorMessageProvider,
     isRecognitionException,
     IToken,
     Lexer,
@@ -21,8 +23,10 @@ import {IRuleData} from "../../_types/CST/IRuleData";
 import {createCSTLeaf} from "./createCSTLeaf";
 import {ICSTParseInit} from "../../_types/CST/ICSTParseInit";
 import {ICSTDataIdentifier} from "../_types/ICSTDataIdentifier";
+import {ICSTParsingError, IParsingError} from "../../_types/errors/IParsingError";
+import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
 
-let tokenList: TokenType[];
+let tokenTypes: TokenType[];
 export class CSTParser extends EmbeddedActionsParser {
     /** The configuration of the parser */
     protected config: IParserConfig;
@@ -37,21 +41,49 @@ export class CSTParser extends EmbeddedActionsParser {
     /** The support rules */
     protected supportRules: Map<string, (idx: number) => ICST> = new Map();
 
-    /** The lexer to tokenize the input */
-    protected lexer: Lexer;
-
     /** Additional data that rules can use to keep track of things */
     protected trackingData: Record<symbol, any> = {};
+
+    protected tokenTypes: TokenType[] = [];
 
     /**
      * Creates a new parser
      * @param config The configuration for the parser
      */
     public constructor(config: IParserConfig) {
-        super((tokenList = resolveTokenTypes(config)));
+        super((tokenTypes = resolveTokenTypes(config)), {
+            errorMessageProvider: {
+                buildNoViableAltMessage: ({expectedPathsPerAlt}) =>
+                    "1 " +
+                    expectedPathsPerAlt
+                        .flat()
+                        .map(sequence =>
+                            sequence
+                                .map(tokenType => tokenMap.get(tokenType) ?? -1)
+                                .join(",")
+                        )
+                        .join(";"),
+                buildEarlyExitMessage: ({expectedIterationPaths}) =>
+                    "2 " +
+                    expectedIterationPaths
+                        .map(sequence =>
+                            sequence
+                                .map(tokenType => tokenMap.get(tokenType) ?? -1)
+                                .join(",")
+                        )
+                        .join(";"),
+                buildMismatchTokenMessage: ({expected}) =>
+                    "3 " + (tokenMap.get(expected) ?? -1),
+                buildNotAllInputParsedMessage: () => "4 ",
+            },
+        });
+
+        this.tokenTypes = tokenTypes;
+        const tokenMap = new Map<TokenType, number>(
+            tokenTypes.map((type, index) => [type, index])
+        );
 
         this.config = config;
-        this.lexer = new Lexer(tokenList);
         this.createStaticStructure();
 
         this.performSelfAnalysis();
@@ -59,15 +91,13 @@ export class CSTParser extends EmbeddedActionsParser {
 
     /**
      * Parses the given text input
-     * @param text The text to be parsed
+     * @param tokens The tokens to be parsed
+     * @param text The text that's being parsed
      * @returns Th concrete syntax tree
      */
-    public parse(text: string): ICST {
-        // Tokenize
-        this.trackingData = {};
-        const {tokens, errors} = this.lexer.tokenize(text);
-
+    public parse(tokens: IToken[], text: string): ICST | {errors: ICSTParsingError[]} {
         // Init parser
+        this.trackingData = {};
         const initData = {parser: this as any, tokens, input: text};
         const finalTokens = this.inits.reduce((current, {init}) => {
             const newTokens = init?.(current);
@@ -78,12 +108,131 @@ export class CSTParser extends EmbeddedActionsParser {
 
         // Parse
         const result = this.expression();
-        console.log([...this.errors, ...errors]);
-        console.log(result);
-        debugger;
+        if (this.errors.length > 0) return {errors: this.getErrors(text)};
+
         return result;
     }
 
+    /**
+     * Retrieves all of the parsing errors
+     * @param input The input text
+     * @returns The error list
+     */
+    protected getErrors(input: string): ICSTParsingError[] {
+        // See the message encodings we specified in the constructor to understand these weird ass messages
+        return this.errors.map<ICSTParsingError>(error => {
+            const type = error.message[0];
+            if (type == "1") {
+                const suggestions = this.getMessageTokens(error.message.slice(2));
+                return {
+                    type: "noViableAlt",
+                    message: `Found unexpected character "${
+                        error.token.image
+                    }" at index ${
+                        error.token.startOffset
+                    }, but expected either ${this.getSuggestionsString(suggestions)}`,
+                    multilineMessage: `Found unexpected character "${
+                        error.token.image
+                    }":\n${getSyntaxPointerMessage(
+                        input,
+                        error.token.startOffset
+                    )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                    suggestions,
+                    token: error.token,
+                };
+            } else if (type == "2") {
+                const suggestions = this.getMessageTokens(error.message.slice(2));
+                return {
+                    type: "earlyExit",
+                    message: `Found unexpected character "${
+                        error.token.image
+                    }" at index ${
+                        error.token.startOffset
+                    }, but expected either ${this.getSuggestionsString(suggestions)}`,
+                    multilineMessage: `Found unexpected character "${
+                        error.token.image
+                    }":\n${getSyntaxPointerMessage(
+                        input,
+                        error.token.startOffset
+                    )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                    suggestions,
+                    token: error.token,
+                };
+            } else if (type == "3") {
+                const suggestions = this.getMessageTokens(error.message.slice(2));
+                if (error.token.tokenType == EOF) {
+                    const message = `End of file reached, but expected "${this.getSuggestionsString(
+                        suggestions
+                    )}"`;
+                    return {
+                        type: "unexpectedEOF",
+                        message,
+                        multilineMessage: message,
+                        expected: suggestions[0][0],
+                    };
+                }
+                return {
+                    type: "unexpectedToken",
+                    message: `Found unexpected character "${
+                        error.token.image
+                    }" at index ${
+                        error.token.startOffset
+                    }, but expected "${this.getSuggestionsString(suggestions)}"`,
+                    multilineMessage: `Found unexpected character "${
+                        error.token.image
+                    }":\n${getSyntaxPointerMessage(
+                        input,
+                        error.token.startOffset
+                    )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                    expected: suggestions[0][0],
+                    token: error.token,
+                };
+            } else {
+                return {
+                    type: "notAllInputParsed",
+                    message: `Found unexpected character "${error.token.image}" at index ${error.token.startOffset}, but expected end of file`,
+                    multilineMessage: `Found unexpected character "${
+                        error.token.image
+                    }":\n${getSyntaxPointerMessage(
+                        input,
+                        error.token.startOffset
+                    )}\nExpected end of file`,
+                    token: error.token,
+                };
+            }
+        });
+    }
+
+    /**
+     * Retrieves the possible token sequences from a string
+     * @param message The message that encoded the token sequences
+     * @returns The token type sequences
+     */
+    protected getMessageTokens(message: string): TokenType[][] {
+        return message
+            .split(";")
+            .map(sequence =>
+                sequence
+                    .split(",")
+                    .map(id => this.tokenTypes[Number(id)])
+                    .filter(s => !!s)
+            )
+            .filter(s => s.length);
+    }
+
+    /**
+     * Retrieves the suggestion in string form
+     * @param suggestions The suggestions of the valid next sequences
+     * @returns The suggestion string
+     */
+    protected getSuggestionsString(suggestions: TokenType[][]): string {
+        const suggestionNames = suggestions.map(([s]) => s?.LABEL ?? s.name);
+        const firstSuggestions = suggestionNames.slice(0, suggestions.length - 2);
+        const lastSuggestionText = suggestionNames.splice(suggestions.length - 2);
+        return [...firstSuggestions, lastSuggestionText.join(" or ")].join(", ");
+    }
+
+    // Parser generation code
     /**
      * Converts the parser config the the proper parser structure
      */

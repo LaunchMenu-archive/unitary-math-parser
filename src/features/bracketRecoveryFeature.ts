@@ -2,7 +2,7 @@ import {createToken, createTokenInstance} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
 import {createFeature} from "../createFeature";
 import {createCSTDataIdentifier} from "../parser/CST/createCSTDataIdentifier";
-import {IASTRecursive} from "../_types/AST/IASTRecursive";
+import {IASTExpression} from "../_types/AST/IASTExpression";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {addFeature} from "./addFeature";
 import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
@@ -12,8 +12,8 @@ const createRecoveryToken = (i: number) =>
     createTokenInstance(leftBracketRecoveryToken, "(", i, i, i, i, i, i);
 
 export const groupRecoveryBaseFeature = createBaseFeature<{
-    CST: [ICSTLeaf, IASTRecursive, ICSTLeaf];
-    AST: IASTRecursive;
+    CST: [ICSTLeaf, IASTExpression, ICSTLeaf];
+    AST: IASTExpression;
     name: "recoveryGroup";
 }>({
     name: "recoveryGroup",
@@ -35,7 +35,7 @@ export const groupRecoveryBaseFeature = createBaseFeature<{
 const recoveryData = createCSTDataIdentifier(() => ({topLevel: false}));
 export const groupRecoveryFeature = createFeature<{
     CST: undefined;
-    AST: IASTRecursive;
+    AST: IASTExpression;
     name: "recoveryGroupInitiator";
 }>({
     name: "recoveryGroupInitiator",

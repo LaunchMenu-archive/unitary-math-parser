@@ -1,13 +1,13 @@
 import {createToken} from "chevrotain";
 import {createFeature} from "../createFeature";
-import {IASTRecursive} from "../_types/AST/IASTRecursive";
+import {IASTExpression} from "../_types/AST/IASTExpression";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {numberBaseFeature} from "./numberBaseFeature";
 
-export const multiplyToken = createToken({name: "MULTIPLY", pattern: /\*/});
+export const multiplyToken = createToken({name: "MULTIPLY", pattern: /\*/, label: '"*"'});
 export const multiplyFeature = createFeature<{
-    CST: [IASTRecursive, ICSTLeaf, IASTRecursive];
-    AST: {factor1: IASTRecursive; factor2: IASTRecursive};
+    CST: [IASTExpression, ICSTLeaf, IASTExpression];
+    AST: {factor1: IASTExpression; factor2: IASTExpression};
     name: "multiply";
 }>({
     name: "multiply",

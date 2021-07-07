@@ -1,7 +1,7 @@
 import {createToken} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
 import {createFeatureSupport} from "../createFeatureSupport";
-import {IASTRecursive} from "../_types/AST/IASTRecursive";
+import {IASTExpression} from "../_types/AST/IASTExpression";
 import {TGetASTType} from "../_types/AST/TGetASTType";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
@@ -9,10 +9,11 @@ import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
 export const parameterSeparatorToken = createToken({
     name: "PARAMETER-SEPARATOR",
     pattern: /\,/,
+    label: ",",
 });
 export const argumentsSupport = createFeatureSupport<{
-    CST: (IASTRecursive | ICSTLeaf)[];
-    AST: {args: IASTRecursive[]};
+    CST: (IASTExpression | ICSTLeaf)[];
+    AST: {args: IASTExpression[]};
     name: "args";
 }>({
     name: "args",
@@ -34,7 +35,7 @@ export const argumentsSupport = createFeatureSupport<{
         return {
             args: children.reduce(
                 (children, child, i) =>
-                    i % 2 == 0 ? [...children, child as IASTRecursive] : children,
+                    i % 2 == 0 ? [...children, child as IASTExpression] : children,
                 []
             ),
             source,
@@ -45,10 +46,11 @@ export const argumentsSupport = createFeatureSupport<{
 export const functionNameToken = createToken({
     name: "FUNCTION-NAME",
     pattern: /[a-zA-Z_]\w+/,
+    label: "function-name",
 });
 export const functionBaseFeature = createBaseFeature<{
     CST: [ICSTLeaf, ICSTLeaf, TGetASTType<typeof argumentsSupport>, ICSTLeaf];
-    AST: {func: string; args: IASTRecursive[]};
+    AST: {func: string; args: IASTExpression[]};
     name: "function";
 }>({
     name: "function",

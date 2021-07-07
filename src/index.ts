@@ -1,4 +1,3 @@
-import {createParser} from "./createParser";
 import {addFeature} from "./features/addFeature";
 import {
     groupRecoveryBaseFeature,
@@ -9,8 +8,9 @@ import {groupBaseFeature} from "./features/groupBaseFeature";
 import {multiplyFeature} from "./features/multiplyFeature";
 import {numberBaseFeature} from "./features/numberBaseFeature";
 import {prefixFeature} from "./features/prefixTestFeature";
+import {Parser} from "./Parser";
 
-const parse = createParser({
+const parser = new Parser({
     features: [groupRecoveryFeature, prefixFeature, addFeature, multiplyFeature],
     baseFeatures: [
         numberBaseFeature,
@@ -19,14 +19,18 @@ const parse = createParser({
         groupRecoveryBaseFeature,
     ],
 });
-const result = parse("$4)+max(4*2,4))++5)");
-const tree = result.parse();
-if (tree.type == "function") {
-    const arg = tree.args[0];
-    if (arg.type == "multiply") console.log(arg.factor1);
+const result = parser.parse("$4)+max(4*2,4))++5)");
+if ("errors" in result) {
+    console.log(...result.errors.map(({multilineMessage}) => multilineMessage));
+} else {
+    const tree = result.ast;
+    if (tree.type == "function") {
+        const arg = tree.args[0];
+        if (arg.type == "multiply") console.log(arg.factor1);
+    }
+    console.log(tree);
+    debugger;
 }
-console.log(tree);
-debugger;
 
 // const result2 = parse("$4+max(4*2)+5").parse();
 // console.log(result2);

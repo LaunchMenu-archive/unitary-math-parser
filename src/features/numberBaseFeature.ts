@@ -3,7 +3,11 @@ import {createBaseFeature} from "../createBaseFeature";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {spaceToken} from "./util/optionalSpace";
 
-export const numberToken = createToken({name: "NUMBER", pattern: /(\d*\.)?\d+/});
+export const numberToken = createToken({
+    name: "NUMBER",
+    pattern: /(\d*\.)?\d+/,
+    label: "number",
+});
 export const numberBaseFeature = createBaseFeature<{
     CST: [ICSTLeaf];
     AST: {value: number};

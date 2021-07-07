@@ -1,5 +1,5 @@
 import {IASTBase} from "./IASTBase";
-import {IASTRecursive} from "./IASTRecursive";
+import {IASTExpression} from "./IASTExpression";
 
 /**
  * Replaces occurrences of the recursive node type by the actual recursive type
@@ -28,8 +28,8 @@ type TRecursionArray<T extends Array<any>, S extends IASTBase> = T extends Array
 /**
  * Checks whether a given node is a recursive node, and if so returns T, otherwise returns F
  */
-export type TIsRecursiveNode<N, T, F> = N extends IASTRecursive
-    ? IASTRecursive extends N
+export type TIsRecursiveNode<N, T, F> = N extends IASTExpression
+    ? IASTExpression extends N
         ? T
         : F
     : F;
