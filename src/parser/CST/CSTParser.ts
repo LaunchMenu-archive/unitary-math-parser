@@ -120,87 +120,91 @@ export class CSTParser extends EmbeddedActionsParser {
      */
     protected getErrors(input: string): ICSTParsingError[] {
         // See the message encodings we specified in the constructor to understand these weird ass messages
-        return this.errors.map<ICSTParsingError>(error => {
-            const type = error.message[0];
-            if (type == "1") {
-                const suggestions = this.getMessageTokens(error.message.slice(2));
-                return {
-                    type: "noViableAlt",
-                    message: `Found unexpected character "${
-                        error.token.image
-                    }" at index ${
-                        error.token.startOffset
-                    }, but expected either ${this.getSuggestionsString(suggestions)}`,
-                    multilineMessage: `Found unexpected character "${
-                        error.token.image
-                    }":\n${getSyntaxPointerMessage(
-                        input,
-                        error.token.startOffset
-                    )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
-                    suggestions,
-                    token: error.token,
-                };
-            } else if (type == "2") {
-                const suggestions = this.getMessageTokens(error.message.slice(2));
-                return {
-                    type: "earlyExit",
-                    message: `Found unexpected character "${
-                        error.token.image
-                    }" at index ${
-                        error.token.startOffset
-                    }, but expected either ${this.getSuggestionsString(suggestions)}`,
-                    multilineMessage: `Found unexpected character "${
-                        error.token.image
-                    }":\n${getSyntaxPointerMessage(
-                        input,
-                        error.token.startOffset
-                    )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
-                    suggestions,
-                    token: error.token,
-                };
-            } else if (type == "3") {
-                const suggestions = this.getMessageTokens(error.message.slice(2));
-                if (error.token.tokenType == EOF) {
-                    const message = `End of file reached, but expected "${this.getSuggestionsString(
-                        suggestions
-                    )}"`;
+        return this.errors
+            .map<ICSTParsingError | undefined>(error => {
+                const type = error.message[0];
+                if (type == "1") {
+                    const suggestions = this.getMessageTokens(error.message.slice(2));
                     return {
-                        type: "unexpectedEOF",
-                        message,
-                        multilineMessage: message,
+                        type: "noViableAlt",
+                        message: `Found unexpected character "${
+                            error.token.image
+                        }" at index ${
+                            error.token.startOffset
+                        }, but expected either ${this.getSuggestionsString(suggestions)}`,
+                        multilineMessage: `Found unexpected character "${
+                            error.token.image
+                        }":\n${getSyntaxPointerMessage(
+                            input,
+                            error.token.startOffset
+                        )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                        suggestions,
+                        token: error.token,
+                    };
+                } else if (type == "2") {
+                    const suggestions = this.getMessageTokens(error.message.slice(2));
+                    return {
+                        type: "earlyExit",
+                        message: `Found unexpected character "${
+                            error.token.image
+                        }" at index ${
+                            error.token.startOffset
+                        }, but expected either ${this.getSuggestionsString(suggestions)}`,
+                        multilineMessage: `Found unexpected character "${
+                            error.token.image
+                        }":\n${getSyntaxPointerMessage(
+                            input,
+                            error.token.startOffset
+                        )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                        suggestions,
+                        token: error.token,
+                    };
+                } else if (type == "3") {
+                    const suggestions = this.getMessageTokens(error.message.slice(2));
+                    if (error.token.tokenType == EOF) {
+                        const message = `End of file reached, but expected ${this.getSuggestionsString(
+                            suggestions
+                        )}`;
+                        return {
+                            type: "unexpectedEOF",
+                            message,
+                            multilineMessage: message,
+                            expected: suggestions[0][0],
+                        };
+                    }
+                    return {
+                        type: "unexpectedToken",
+                        message: `Found unexpected character "${
+                            error.token.image
+                        }" at index ${
+                            error.token.startOffset
+                        }, but expected "${this.getSuggestionsString(suggestions)}"`,
+                        multilineMessage: `Found unexpected character "${
+                            error.token.image
+                        }":\n${getSyntaxPointerMessage(
+                            input,
+                            error.token.startOffset
+                        )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
                         expected: suggestions[0][0],
+                        token: error.token,
                     };
                 }
-                return {
-                    type: "unexpectedToken",
-                    message: `Found unexpected character "${
-                        error.token.image
-                    }" at index ${
-                        error.token.startOffset
-                    }, but expected "${this.getSuggestionsString(suggestions)}"`,
-                    multilineMessage: `Found unexpected character "${
-                        error.token.image
-                    }":\n${getSyntaxPointerMessage(
-                        input,
-                        error.token.startOffset
-                    )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
-                    expected: suggestions[0][0],
-                    token: error.token,
-                };
-            } else {
-                return {
-                    type: "notAllInputParsed",
-                    message: `Found unexpected character "${error.token.image}" at index ${error.token.startOffset}, but expected end of file`,
-                    multilineMessage: `Found unexpected character "${
-                        error.token.image
-                    }":\n${getSyntaxPointerMessage(
-                        input,
-                        error.token.startOffset
-                    )}\nExpected end of file`,
-                    token: error.token,
-                };
-            }
-        });
+                // Not all input being parsed is only relevant if no other error occurred
+                else if (this.errors.length == 1) {
+                    return {
+                        type: "notAllInputParsed",
+                        message: `Found unexpected character "${error.token.image}" at index ${error.token.startOffset}, but expected end of file`,
+                        multilineMessage: `Found unexpected character "${
+                            error.token.image
+                        }":\n${getSyntaxPointerMessage(
+                            input,
+                            error.token.startOffset
+                        )}\nExpected end of file`,
+                        token: error.token,
+                    };
+                }
+            })
+            .filter((s): s is ICSTParsingError => !!s);
     }
 
     /**
@@ -268,7 +272,7 @@ export class CSTParser extends EmbeddedActionsParser {
                 parser: this as any,
                 nextRule: this.expression,
                 createLeaf: createCSTLeaf,
-                createNode: () => createCSTNodeCreator(name),
+                createNode: () => createCSTNodeCreator(name, {precedence: Infinity}),
             };
             return this.RULE(`${name}-base-${i}`, () =>
                 (exec as any)({...baseRuleData, currentRule: this.base})
@@ -291,6 +295,7 @@ export class CSTParser extends EmbeddedActionsParser {
             [];
         this.precedenceRules = layers.map(({prefix, suffix}, index) => {
             const nextRule = index > 0 ? rules[index - 1] : this.base;
+            const precedence = layers.length - index;
 
             // Create the prefix rule if there are prefixes
             let prefixRule: (() => ICST) | undefined;
@@ -300,7 +305,7 @@ export class CSTParser extends EmbeddedActionsParser {
                         parser: this as any,
                         nextRule,
                         createLeaf: createCSTLeaf,
-                        createNode: () => createCSTNodeCreator(name),
+                        createNode: () => createCSTNodeCreator(name, {precedence}),
                     };
 
                     return this.RULE(`p${index}-prefix-${name}-${i}`, () =>
@@ -333,14 +338,29 @@ export class CSTParser extends EmbeddedActionsParser {
             }
 
             // Create the suffix rule
-            const suffixOptionRules = suffix.map(({name, parse: {exec}}, i) => {
+            const suffixOptionRules = suffix.map(({name, parse: {exec, ...rest}}, i) => {
                 const suffixRuleData: Omit<IFeatureRuleData, "currentRule"> = {
                     parser: this as any,
                     nextRule: prefixRule ?? nextRule,
                     createLeaf: createCSTLeaf,
-                    createNode: () => createCSTNodeCreator(name),
+                    createNode: () =>
+                        createCSTNodeCreator(name, {
+                            precedence,
+                            ...("associativity" in rest
+                                ? {associativity: rest.associativity}
+                                : undefined),
+                        }),
                 };
 
+                if ("associativity" in rest && rest.associativity == "right") {
+                    return this.RULE(`p${index}-suffix-${name}-${i}`, node =>
+                        (exec as any)(node, {
+                            ...suffixRuleData,
+                            currentRule: suffixRule,
+                            nextRule: suffixRule,
+                        })
+                    );
+                }
                 return this.RULE(`p${index}-suffix-${name}-${i}`, node =>
                     (exec as any)(node, {...suffixRuleData, currentRule: suffixRule})
                 );
@@ -461,7 +481,9 @@ export class CSTParser extends EmbeddedActionsParser {
             }
 
             // Add the feature to the layer
-            const type = parse.type == "prefixBase" ? "prefix" : parse.type;
+            const conversions = {prefixBase: "prefix", infix: "suffix"} as const;
+            const type =
+                conversions[parse.type as keyof typeof conversions] ?? parse.type;
             const list = layer[type];
             const relativeIndex =
                 relativeTo && list.findIndex(({name}) => relativeTo?.name);
@@ -563,13 +585,13 @@ export class CSTParser extends EmbeddedActionsParser {
         };
 
         if (transformTokens) {
-            this.tokVector = transformTokens(oldTokens, this.curIdx);
-            this.tokVectorLength = this.tokVector.length;
+            const newTokens = transformTokens(oldTokens, this.currIdx);
+            this.tokVector = newTokens;
+            this.tokVectorLength = newTokens.length;
         }
 
         try {
-            const res = {result: grammarRule.apply(this, args), revert};
-            return res;
+            return {result: grammarRule.apply(this, args), revert};
         } catch (e) {
             if (isRecognitionException(e)) {
                 return {result: null, revert};

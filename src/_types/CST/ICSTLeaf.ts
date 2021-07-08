@@ -11,4 +11,6 @@ export type ICSTLeaf = IImmutable<{
         start: number;
         end: number;
     };
+    /** Whether this node is one generated to recover from a fatal error */
+    isRecovery?: boolean;
 }>;

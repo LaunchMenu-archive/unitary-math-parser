@@ -25,13 +25,19 @@ export class Tokenizer {
         const {tokens, errors} = this.lexer.tokenize(text);
         return {
             tokens,
-            errors: errors.map(error => ({
-                type: "unknownCharacter",
-                index: error.offset,
-                character: text[error.offset],
-                message: `Unexpected character found at index ${error.offset}: ${error.offset}`,
-                multilineMessage: getSyntaxPointerMessage(text, error.offset),
-            })),
+            errors: errors.map(error => {
+                const char = text[error.offset];
+                return {
+                    type: "unknownCharacter",
+                    index: error.offset,
+                    character: char,
+                    message: `Unexpected character found at index ${error.offset}: ${char}`,
+                    multilineMessage: `Unexpected character "${char}" found:\n${getSyntaxPointerMessage(
+                        text,
+                        error.offset
+                    )}`,
+                };
+            }),
         };
     }
 }

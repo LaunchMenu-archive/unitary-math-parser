@@ -1,36 +1,13 @@
 import {createToken, createTokenInstance} from "chevrotain";
-import {createBaseFeature} from "../createBaseFeature";
-import {createFeature} from "../createFeature";
-import {createCSTDataIdentifier} from "../parser/CST/createCSTDataIdentifier";
-import {IASTExpression} from "../_types/AST/IASTExpression";
-import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
-import {addFeature} from "./addFeature";
-import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
+import {createFeature} from "../../createFeature";
+import {createCSTDataIdentifier} from "../../parser/CST/createCSTDataIdentifier";
+import {IASTExpression} from "../../_types/AST/IASTExpression";
+import {addFeature} from "../addFeature";
+import {leftBracketToken, rightBracketToken} from "../groupBaseFeature";
 
 export const leftBracketRecoveryToken = createToken({name: "LEFT-BRACKET-RECOVERY"});
 const createRecoveryToken = (i: number) =>
     createTokenInstance(leftBracketRecoveryToken, "(", i, i, i, i, i, i);
-
-export const groupRecoveryBaseFeature = createBaseFeature<{
-    CST: [ICSTLeaf, IASTExpression, ICSTLeaf];
-    AST: IASTExpression;
-    name: "recoveryGroup";
-}>({
-    name: "recoveryGroup",
-    parse: {
-        tokens: [leftBracketToken, rightBracketToken],
-        exec({parser, createNode, createLeaf}) {
-            const {addChild, finish} = createNode();
-            addChild(createLeaf(parser.consume(0, leftBracketRecoveryToken)));
-            addChild(parser.subrule(0, parser.expression));
-            addChild(createLeaf(parser.consume(0, rightBracketToken)));
-            return finish();
-        },
-    },
-    abstract({children: [l, exp, r]}, source) {
-        return exp;
-    },
-});
 
 const recoveryData = createCSTDataIdentifier(() => ({topLevel: false}));
 export const groupRecoveryFeature = createFeature<{
@@ -59,10 +36,13 @@ export const groupRecoveryFeature = createFeature<{
                         transformTokens: (tokens, i) => {
                             if (recoveryCount == 0) return tokens;
 
-                            const tok = createRecoveryToken(i);
                             return [
                                 ...tokens.slice(0, i + 1),
-                                ...new Array(recoveryCount).fill(tok),
+                                ...new Array(recoveryCount)
+                                    .fill(0)
+                                    .map((_, idx) =>
+                                        createRecoveryToken(i + idx - recoveryCount + 1)
+                                    ),
                                 ...tokens.slice(i + 1),
                             ];
                         },

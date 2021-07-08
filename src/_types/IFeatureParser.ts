@@ -7,7 +7,24 @@ import {IFeatureSupport} from "./IFeatureSupport";
 import {IFeatureSyntax} from "./IFeatureSyntax";
 import {IUsedTokenTypes} from "./IUsedTokenTypes";
 
-export type IFeatureParser = IFeatureParserSuffix | IFeatureParserPrefix;
+export type IFeatureParser =
+    | IFeatureParserPrefix
+    | IFeatureParserInfix
+    | IFeatureParserSuffix;
+
+export type IFeatureParserInfix = IFeatureParserBase & {
+    /** The type of the operator */
+    type: "infix";
+    /** Whether the operator is left or right associative */
+    associativity: "left" | "right";
+    /**
+     * Executes the rule
+     * @param node The recursively obtained node
+     * @param data The additional data the rule can use
+     * @returns The obtained concrete syntax tree
+     */
+    exec(node: ICST, data: IFeatureRuleData): ICST;
+};
 
 export type IFeatureParserSuffix = IFeatureParserBase & {
     /** The type of the operator */

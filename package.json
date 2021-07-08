@@ -10,8 +10,11 @@
     "scripts": {
         "watch": "tsc -w",
         "build": "tsc",
-        "test": "node --inspect-brk build/index.js",
-        "start": "node build/index.js"
+        "start": "node build/index.js",
+        "debug": "node --inspect-brk build/index.js",
+        "test": "jest -i",
+        "test-watch": "jest --watch -i",
+        "test-watch-debug": "node --inspect-brk ../../node_modules/jest/bin/jest.js --runInBand --watch --config=\"jest.config.js\""
     },
     "repository": {
         "type": "git",
@@ -29,7 +32,10 @@
     },
     "homepage": "https://github.com/TarVK/model-react#readme",
     "devDependencies": {
+        "@types/jest": "^26.0.24",
         "@types/uuid": "^8.3.1",
+        "jest": "^27.0.6",
+        "ts-jest": "^27.0.3",
         "ts-loader": "^6.0.2",
         "typescript": "^4.0.2",
         "webpack": "^4.32.2",
