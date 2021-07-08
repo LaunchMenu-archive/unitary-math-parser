@@ -224,17 +224,14 @@ import {ICSTNode} from "../../_types/CST/ICSTNode";
  *
  * The passed subtree must have all recovery open brackets at the start of the expression for this to work
  * @param tree The tree to get all valid alternatives for
- * @param validate A predicate to validate whether a given concrete syntax tree is desirable based on whatever criteria (E.g. units working out)
- * @param skipConsecutiveNodes Whether to skip adding brackets between operations of the same type (E.g. consecutive additions: `(1+2+3)/3`)
  * @returns A generator to obtain all valid options except the passed option
  */
 export function* obtainAllAlternativeGroupOptions(
     tree: ICST,
-    validate: (tree: ICST) => boolean = () => true,
-    skipConsecutiveNodes: boolean = true
+    validate: (tree: ICST) => boolean = () => true
 ): Generator<ICST> {
     let first = true;
-    const generator = obtainAllPossibleGroupOptions(tree, validate, skipConsecutiveNodes);
+    const generator = obtainAllPossibleGroupOptions(tree);
     for (let tree of generator) {
         if (!first) yield tree;
         first = false;
@@ -246,61 +243,63 @@ export function* obtainAllAlternativeGroupOptions(
  *
  * The passed subtree must have all recovery open brackets at the start of the expression for this to work
  * @param tree The tree to get all valid alternatives for
- * @param validate A predicate to validate whether a given concrete syntax tree is desirable based on whatever criteria (E.g. units working out)
- * @param skipConsecutiveNodes Whether to skip adding brackets between operations of the same type (E.g. consecutive additions: `(1+2+3)/3`)
+ * @param left Whether we are considering missing left-brackets, or right-brackets. Will automatically also consider right-brackets if left is supplied, but not vice-versa.
  * @returns A generator to obtain all valid options
  */
 export function* obtainAllPossibleGroupOptions(
     tree: ICST,
-    validate: (tree: ICST) => boolean = () => true,
-    skipConsecutiveNodes: boolean = true
+    left: boolean = true
 ): Generator<ICST> {
-    // Obtain the path to a recovery node
-    const baseRecoveryPath: ICSTNode[] | undefined = findRecoveryGroup(tree);
-    if (!baseRecoveryPath) {
-        yield tree;
-        return;
-    }
-    const recoveryNode = baseRecoveryPath[baseRecoveryPath.length - 1];
+    // If we're trying the left side trees, take the product with all right-side trees
+    const otherSideTrees = left ? obtainAllPossibleGroupOptions(tree, false) : [tree];
 
-    // Repeat the process for all options for subtrees
-    const recoveryNodeChild = recoveryNode.children[1];
-    const groupSubtrees = obtainAllPossibleGroupOptions(
-        recoveryNodeChild,
-        validate,
-        skipConsecutiveNodes
-    );
-    subtree: for (let subtree of groupSubtrees) {
-        let recoveryPath = reconstructTree(baseRecoveryPath, subtree);
-        yield recoveryPath[0];
+    for (let baseTree of otherSideTrees) {
+        // Obtain the path to a recovery node
+        const baseRecoveryPath: ICSTNode[] | undefined = findRecoveryGroup(
+            baseTree,
+            left
+        );
+        if (!baseRecoveryPath) {
+            yield baseTree;
+            continue;
+        }
 
-        while (true) {
-            if (!recoveryPath) continue subtree;
-            const recoveryNode = recoveryPath[recoveryPath.length - 1];
+        const recoveryNode = baseRecoveryPath[baseRecoveryPath.length - 1];
 
-            // Find the path to the left most right-recursive expression
-            const subExp = recoveryNode.children[1];
-            const leftMostRightRecursivePath = findLeftMostRightRecursiveNode(
-                subExp as ICSTNode
-            );
-            if (!leftMostRightRecursivePath) continue subtree;
-            const leftMostRightRecursiveNode =
-                leftMostRightRecursivePath[leftMostRightRecursivePath.length - 1];
+        // Repeat the process for all options for subtrees
+        const recoveryNodeChild = recoveryNode.children[1];
+        const groupSubtrees = obtainAllPossibleGroupOptions(recoveryNodeChild);
+        subtree: for (let subtree of groupSubtrees) {
+            let recoveryPath = reconstructTree(baseRecoveryPath, subtree);
+            yield recoveryPath[0];
 
-            // Insert the left most right recursive node into the right position within the recovery path
-            const insertIndex = findCorrectPrecedenceLevelInPath(
-                recoveryPath,
-                leftMostRightRecursiveNode
-            );
-            const newTree = insertInPath(
-                recoveryPath,
-                leftMostRightRecursivePath,
-                insertIndex
-            );
-            tree = newTree.tree;
-            recoveryPath = newTree.recoveryGroupPath;
+            // Repeat as long s there is a right-recursive node in the group that can be moved out
+            while (true) {
+                if (!recoveryPath) continue subtree;
+                const recoveryNode = recoveryPath[recoveryPath.length - 1];
 
-            yield tree;
+                // Find the path to the left most right-recursive expression
+                const subExp = recoveryNode.children[1];
+                const edgeRecursivePath = findEdgeRecursiveNode(subExp as ICSTNode, left);
+                if (!edgeRecursivePath) continue subtree;
+                const edgeRecursiveNode = edgeRecursivePath[edgeRecursivePath.length - 1];
+
+                // Insert the left most right recursive node into the right position within the recovery path
+                const insertIndex = findCorrectPrecedenceLevelInPath(
+                    recoveryPath,
+                    edgeRecursiveNode
+                );
+                const newTree = insertInPath(
+                    recoveryPath,
+                    edgeRecursivePath,
+                    insertIndex,
+                    left
+                );
+                baseTree = newTree.tree;
+                recoveryPath = newTree.recoveryGroupPath;
+
+                yield baseTree;
+            }
         }
     }
 }
@@ -310,29 +309,49 @@ export function* obtainAllPossibleGroupOptions(
 /**
  * Finds the first recovery group in the tree
  * @param tree The tree to find the group in
+ * @param left Whether we are considering missing left-brackets, or right-brackets
  * @returns Either the path to the group, or undefined
  */
-export function findRecoveryGroup(tree: ICST): ICSTNode[] | undefined {
+export function findRecoveryGroup(
+    tree: ICST,
+    left: boolean = true
+): ICSTNode[] | undefined {
     if (isLeaf(tree) || tree.children.length == 0) return undefined;
-    if (tree.type == "recoveryGroup") return [tree];
-    const childPath = findRecoveryGroup(tree.children[0]);
+    const bracket = left ? tree.children[0] : tree.children[2];
+    if (
+        tree.type == "recoveryGroup" &&
+        (!bracket || (isLeaf(bracket) && bracket.isRecovery))
+    )
+        return [tree];
+    const childPath = findRecoveryGroup(
+        tree.children[left ? 0 : tree.children.length - 1],
+        left
+    );
     return childPath ? [tree, ...childPath] : undefined;
 }
 
 /**
- * Finds the left most right recursive node if there is any (on a path where all nodes are recursive expressions)
+ * Finds the left most right recursive node or right most left recursive node if there is any (on a path where all nodes are recursive expressions)
  * @param tree The recovery group to search in
+ * @param left Whether we are considering missing left-brackets, or right-brackets
  * @returns Either the path to the node, or undefined if no such node exists
  */
-export function findLeftMostRightRecursiveNode(tree: ICSTNode): ICSTNode[] | undefined {
+export function findEdgeRecursiveNode(
+    tree: ICSTNode,
+    left: boolean = true
+): ICSTNode[] | undefined {
     if (tree.children.length == 0) return undefined;
 
     const firstChild = tree.children[0];
     const lastChild = getRightChild(tree);
 
-    const childResult = isLeaf(firstChild)
-        ? undefined
-        : findLeftMostRightRecursiveNode(firstChild);
+    const edgeChild = left ? firstChild : lastChild;
+    const recursiveChild = left ? lastChild : firstChild;
+
+    const childResult =
+        !edgeChild || isLeaf(edgeChild)
+            ? undefined
+            : findEdgeRecursiveNode(edgeChild, left);
 
     // If this isn't an expression node, it can't be part of a recursive path
     const isExpNode = isExpression(tree);
@@ -341,9 +360,9 @@ export function findLeftMostRightRecursiveNode(tree: ICSTNode): ICSTNode[] | und
     // If the child is right recursive, this is the left-most right recursive path we can find
     if (childResult) return [tree, ...childResult];
 
-    // If this node itself is right recursive it's a valid path to return
-    const isRightRecursive = lastChild && isExpression(lastChild);
-    if (isRightRecursive) return [tree];
+    // If this node itself is right recursive (if it's the left most node) it's a valid path to return
+    const isRecursive = recursiveChild && isExpression(recursiveChild);
+    if (isRecursive) return [tree];
 
     // Otherwise no path could be found
     return undefined;
@@ -379,13 +398,14 @@ export function findCorrectPrecedenceLevelInPath(
  * @param recoveryGroupPath The path for the node to be inserted in
  * @param nodePath The path from the recovery group to the node that should be moved
  * @param index The index for the node to be inserted at
- * @param originalGroupNode The original group node (which may have been replaced in the path)
+ * @param left Whether we are considering missing left-brackets, or right-brackets
  * @returns The new subtree, and new path to the recovery group
  */
 export function insertInPath(
     recoveryGroupPath: ICSTNode[],
     nodePath: ICSTNode[],
-    index: number
+    index: number,
+    left: boolean = true
 ): {tree: ICSTNode; recoveryGroupPath: ICSTNode[]} {
     // Find the children to insert into the left and right subtrees of the node
     const leftChildren: ICSTNode[] = [];
@@ -409,28 +429,38 @@ export function insertInPath(
             orNode: pathNode,
             newNode: replaceChild(pathNode, orNode, newNode),
         }),
-        {orNode: node, newNode: getRightChild(node)!}
+        {orNode: node, newNode: left ? getRightChild(node)! : node.children[0]}
     ).newNode;
 
     // Assemble the left and right subtrees
-    const leftBase = node.children[0];
-    const rightBase = newGroup as ICSTNode;
+    const leftTreeBase = (left ? node.children[0] : newGroup) as ICSTNode;
+    const rightTreeBase = (left ? newGroup : getRightChild(node)!) as ICSTNode;
     const leftTree = leftChildren.reduceRight(
-        (current, n) => ({...n, children: [...n.children.slice(0, -1), current]}),
-        leftBase
+        ({newNode, path}, n) => {
+            const nextNode = {...n, children: [...n.children.slice(0, -1), newNode]};
+            return {newNode: nextNode, path: [nextNode, ...path]};
+        },
+        {newNode: leftTreeBase, path: [leftTreeBase]}
     );
-    const {newNode: rightTree, path: rightPath} = rightChildren.reduceRight(
+    const rightTree = rightChildren.reduceRight(
         ({newNode, path}, n) => {
             const nextNode = {...n, children: [newNode, ...n.children.slice(1)]};
             return {newNode: nextNode, path: [nextNode, ...path]};
         },
-        {newNode: rightBase, path: [rightBase]}
+        {newNode: rightTreeBase, path: [rightTreeBase]}
     );
+    const sideTree = (left ? leftTree : rightTree).newNode;
+    const pathTree = (left ? rightTree : leftTree).newNode;
+    const insertionToGroupPath = (left ? rightTree : leftTree).path;
 
     // Create the new node to be inserted with the correct subtrees, and insert it in the path
     const newNode = {
         ...node,
-        children: [leftTree, ...node.children.slice(1, -1), rightTree],
+        children: [
+            left ? sideTree : pathTree,
+            ...node.children.slice(1, -1),
+            left ? pathTree : sideTree,
+        ],
     };
     const newPath = recoveryGroupPath.slice(0, index).reduceRight(
         ({orNode, newNode, path}, pathNode) => {
@@ -443,7 +473,10 @@ export function insertInPath(
         },
         {orNode: recoveryGroupPath[index], newNode, path: [newNode]}
     );
-    return {tree: newPath.newNode, recoveryGroupPath: [...newPath.path, ...rightPath]};
+    return {
+        tree: newPath.newNode,
+        recoveryGroupPath: [...newPath.path, ...insertionToGroupPath],
+    };
 }
 
 /**
@@ -492,7 +525,6 @@ export function replaceChild(node: ICSTNode, oldNode: ICST, newNode: ICST): ICST
 }
 
 // Guards
-
 /**
  * Checks whether a given node is right associative
  * @param node The node to be checked

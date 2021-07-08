@@ -13,7 +13,7 @@ const parser = new Parser({
     features: [groupRecoveryFeature, prefixFeature, addFeature, multiplyFeature],
     baseFeatures: [numberBaseFeature, functionBaseFeature, groupRecoveryBaseFeature],
 });
-const input = "1+2+3+4+5+6)))*2";
+const input = "$5*5))+((max(6)+3*2";
 const result = parser.parse(input);
 if ("errors" in result) {
     console.log(...result.errors.map(({multilineMessage}) => multilineMessage));
