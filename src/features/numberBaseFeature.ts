@@ -22,10 +22,8 @@ export const numberBaseFeature = createBaseFeature<{
             return finish();
         },
     },
-    abstract({children: [child]}, source) {
-        return {
-            value: parseFloat(child.text),
-            source,
-        };
-    },
+    abstract: ({children: [child]}) => ({
+        value: parseFloat(child.text),
+    }),
+    recurse: node => node,
 });

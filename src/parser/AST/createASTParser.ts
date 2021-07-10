@@ -6,6 +6,8 @@ import {ICSTConversionNode} from "../../_types/CST/ICSTConversionNode";
 import {ICSTNode} from "../../_types/CST/ICSTNode";
 import {IFeatureSyntax} from "../../_types/IFeatureSyntax";
 import {IParserConfig} from "../../_types/IParserConfig";
+import {TGetConfigOutputAST} from "../../_types/AST/TGetConfigOutputAST";
+import {TGetParserConfigSyntax} from "../../_types/TGetParserConfigSyntax";
 import {getFeatureSupports} from "../getFeatureSupports";
 
 /**
@@ -13,15 +15,15 @@ import {getFeatureSupports} from "../getFeatureSupports";
  * @param config The parser configuration
  * @returns The AST parser
  */
-export function createASTParser<T extends IFeatureSyntax>(
-    config: IParserConfig<T>
+export function createASTParser<C extends IParserConfig>(
+    config: C
 ): {
     /**
      * Creates a AST given a CST
      * @param tree The tree to make abstract
      * @returns The abstract tree that was created
      */
-    (tree: ICST): TMakeASTRecursive<TGetSyntaxASTType<T>>;
+    (tree: ICST): TGetConfigOutputAST<C>;
 } {
     // Retrieve  the abstraction functions
     const abstractionFuncs = new Map<

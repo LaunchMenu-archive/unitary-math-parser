@@ -2,6 +2,7 @@ import {createToken} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
 import {createFeatureSupport} from "../createFeatureSupport";
 import {IASTExpression} from "../_types/AST/IASTExpression";
+import {IRecursive} from "../_types/AST/IRecursive";
 import {TGetASTType} from "../_types/AST/TGetASTType";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
@@ -13,7 +14,7 @@ export const parameterSeparatorToken = createToken({
 });
 export const argumentsSupport = createFeatureSupport<{
     CST: (IASTExpression | ICSTLeaf)[];
-    AST: {args: IASTExpression[]};
+    AST: {args: IRecursive<IASTExpression>[]};
     name: "args";
 }>({
     name: "args",
@@ -31,16 +32,14 @@ export const argumentsSupport = createFeatureSupport<{
             return finish();
         },
     },
-    abstract({children}, source) {
-        return {
-            args: children.reduce(
-                (children, child, i) =>
-                    i % 2 == 0 ? [...children, child as IASTExpression] : children,
-                []
-            ),
-            source,
-        };
-    },
+    abstract: ({children}) => ({
+        args: children.reduce(
+            (children, child, i) =>
+                i % 2 == 0 ? [...children, child as IASTExpression] : children,
+            []
+        ),
+    }),
+    recurse: ({args, ...rest}, recurse) => ({args: args.map(recurse), ...rest}),
 });
 
 export const functionNameToken = createToken({
@@ -49,9 +48,13 @@ export const functionNameToken = createToken({
     label: "function-name",
 });
 export const functionBaseFeature = createBaseFeature<{
-    CST: [ICSTLeaf, ICSTLeaf, TGetASTType<typeof argumentsSupport>, ICSTLeaf];
-    AST: {func: string; args: IASTExpression[]};
     name: "function";
+    CST: [ICSTLeaf, ICSTLeaf, TGetASTType<typeof argumentsSupport>, ICSTLeaf];
+    AST: {
+        func: string;
+        args: IRecursive<IASTExpression>[];
+    };
+    supports: [typeof argumentsSupport];
 }>({
     name: "function",
     parse: {
@@ -66,11 +69,13 @@ export const functionBaseFeature = createBaseFeature<{
             return finish();
         },
     },
-    abstract({children: [name, lb, args, rb]}, source) {
-        return {
-            func: name.text,
-            args: args.args,
-            source,
-        };
-    },
+    abstract: ({children: [name, lb, args, rb]}, source) => ({
+        func: name.text,
+        args: args.args,
+        source,
+    }),
+    recurse: ({args, ...rest}, recurse) => ({
+        args: args.map(recurse),
+        ...rest,
+    }),
 });

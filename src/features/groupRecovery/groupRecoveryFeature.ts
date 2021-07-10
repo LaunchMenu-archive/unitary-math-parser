@@ -64,7 +64,5 @@ export const groupRecoveryFeature = createFeature<{
             return parser.subrule(0, nextRule);
         },
     },
-    abstract(child) {
-        return child;
-    },
+    abstract: child => child,
 });

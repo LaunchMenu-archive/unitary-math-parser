@@ -25,6 +25,8 @@ import {ICSTParseInit} from "../../_types/CST/ICSTParseInit";
 import {ICSTDataIdentifier} from "../_types/ICSTDataIdentifier";
 import {ICSTParsingError, IParsingError} from "../../_types/errors/IParsingError";
 import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
+import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
+import {isLeaf} from "./isLeaf";
 
 let tokenTypes: TokenType[];
 export class CSTParser extends EmbeddedActionsParser {
@@ -111,6 +113,41 @@ export class CSTParser extends EmbeddedActionsParser {
         if (this.errors.length > 0) return {errors: this.getErrors(text)};
 
         return result;
+    }
+
+    /**
+     * Walks a tree and reduces it to some result
+     * @param base The base case for the tree walk
+     * @param step The step case for the tree walk
+     * @param tree The tree to be reduced
+     * @returns The result of the reduction
+     */
+    public reduce<T>(
+        base: {
+            /**
+             * Returns the result for a given leaf
+             * @param leaf The leaf that was found
+             * @returns The result for the leaf
+             */
+            (leaf: ICSTLeaf): T;
+        },
+        step: {
+            /**
+             * Returns the result for a given node
+             * @param type The type of the node that was found
+             * @param children The results of the children of the node
+             * @returns The result for this node
+             */
+            (type: string, children: T[]): T;
+        },
+        tree: ICST
+    ): T {
+        if (isLeaf(tree)) return base(tree);
+        else
+            return step(
+                tree.type,
+                tree.children.map(child => this.reduce(base, step, child))
+            );
     }
 
     /**

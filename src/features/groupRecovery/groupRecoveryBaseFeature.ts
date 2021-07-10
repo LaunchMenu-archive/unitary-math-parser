@@ -52,7 +52,5 @@ export const groupRecoveryBaseFeature = createBaseFeature<{
             ]);
         },
     },
-    abstract({children: [l, exp, r]}, source) {
-        return exp;
-    },
+    abstract: ({children: [l, exp, r]}) => exp,
 });

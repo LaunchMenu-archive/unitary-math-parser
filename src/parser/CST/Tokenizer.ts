@@ -2,6 +2,7 @@ import {IToken, Lexer} from "chevrotain";
 import {IUnknownCharacterError} from "../../_types/errors/IUnknownCharacterError";
 import {IParserConfig} from "../../_types/IParserConfig";
 import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
+import {ITokenizerResult} from "../_types/ITokenizerResult";
 import {resolveTokenTypes} from "./CSTParser";
 
 export class Tokenizer {
@@ -21,7 +22,7 @@ export class Tokenizer {
      * @param text The text to tokenize
      * @returns The result or parsing error
      */
-    public tokenize(text: string): {tokens: IToken[]; errors: IUnknownCharacterError[]} {
+    public tokenize(text: string): ITokenizerResult {
         const {tokens, errors} = this.lexer.tokenize(text);
         return {
             tokens,

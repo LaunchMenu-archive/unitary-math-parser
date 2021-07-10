@@ -30,7 +30,5 @@ export const groupBaseFeature = createBaseFeature<{
             return finish();
         },
     },
-    abstract({children: [l, exp, r]}, source) {
-        return exp;
-    },
+    abstract: ({children: [l, exp, r]}) => exp,
 });

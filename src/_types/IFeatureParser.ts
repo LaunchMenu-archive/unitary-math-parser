@@ -7,12 +7,12 @@ import {IFeatureSupport} from "./IFeatureSupport";
 import {IFeatureSyntax} from "./IFeatureSyntax";
 import {IUsedTokenTypes} from "./IUsedTokenTypes";
 
-export type IFeatureParser =
-    | IFeatureParserPrefix
-    | IFeatureParserInfix
-    | IFeatureParserSuffix;
+export type IFeatureParser<S extends IFeatureSupport[]> =
+    | IFeatureParserPrefix<S>
+    | IFeatureParserInfix<S>
+    | IFeatureParserSuffix<S>;
 
-export type IFeatureParserInfix = IFeatureParserBase & {
+export type IFeatureParserInfix<S extends IFeatureSupport[]> = IFeatureParserBase<S> & {
     /** The type of the operator */
     type: "infix";
     /** Whether the operator is left or right associative */
@@ -26,7 +26,7 @@ export type IFeatureParserInfix = IFeatureParserBase & {
     exec(node: ICST, data: IFeatureRuleData): ICST;
 };
 
-export type IFeatureParserSuffix = IFeatureParserBase & {
+export type IFeatureParserSuffix<S extends IFeatureSupport[]> = IFeatureParserBase<S> & {
     /** The type of the operator */
     type: "suffix";
     /**
@@ -38,7 +38,7 @@ export type IFeatureParserSuffix = IFeatureParserBase & {
     exec(node: ICST, data: IFeatureRuleData): ICST;
 };
 
-export type IFeatureParserPrefix = IFeatureParserBase & {
+export type IFeatureParserPrefix<S extends IFeatureSupport[]> = IFeatureParserBase<S> & {
     /** The type of the operator */
     type: "prefix" | "prefixBase"; // Prefix base removes the fallthrough case of the prefix
     /**
@@ -49,11 +49,11 @@ export type IFeatureParserPrefix = IFeatureParserBase & {
     exec(data: IFeatureRuleData): ICST;
 };
 
-export type IFeatureParserBase = {
+export type IFeatureParserBase<S extends IFeatureSupport[]> = {
     /** The token types used by this feature */
     tokens?: IUsedTokenTypes;
     /** The supporting rules that are used by the rule */
-    supports?: IFeatureSupport[];
+    supports?: S;
     /** Specifies the precedence relation to another feature */
     precedence:
         | {

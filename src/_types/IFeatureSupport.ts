@@ -5,6 +5,10 @@ import {IFeatureSyntax} from "./IFeatureSyntax";
 import {IUsedTokenTypes} from "./IUsedTokenTypes";
 import {IRuleData} from "./CST/IRuleData";
 import {ICSTParseInit} from "./CST/ICSTParseInit";
+import {ICorrectionSuggestionConfig} from "./CST/ICorrectionSuggestionConfig";
+import {TGetICSTNode} from "./CST/TGetICSTNode";
+import {TAbstractionOutput} from "./AST/TAbstractionOutput";
+import {IRecurseFunc} from "./IRecurseFunc";
 
 export type IFeatureSupport<T extends IFeatureSyntax = IFeatureSyntax> = {
     /** The name of the supporting rule */
@@ -22,15 +26,14 @@ export type IFeatureSupport<T extends IFeatureSyntax = IFeatureSyntax> = {
          */
         exec(data: IRuleData): ICST;
         /** The supporting rules that are used by the rule */
-        supports?: IFeatureSupport[];
+        supports?: T["supports"];
+        /** The functions to obtain suggestions for correcting any possibly found and corrected mistakes */
+        correctionSuggestions?: ICorrectionSuggestionConfig<TGetICSTNode<T["CST"]>>;
     } & ICSTParseInit;
     /**
      * Transforms the concrete syntax tree to an abstract syntax tree node
      * @param tree The concrete syntax tree node to transform
      * @returns The abstract syntax tree node
      */
-    abstract(
-        tree: TGetConversionTree<T["CST"]>,
-        source: ICST
-    ): Omit<IASTBase & T["AST"], "type">;
-};
+    abstract(tree: TGetConversionTree<T["CST"]>, source: ICST): TAbstractionOutput<T>;
+} & IRecurseFunc<T>;

@@ -1,13 +1,14 @@
 import {createToken} from "chevrotain";
 import {createFeature} from "../createFeature";
 import {IASTExpression} from "../_types/AST/IASTExpression";
+import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {numberBaseFeature} from "./numberBaseFeature";
 
 export const multiplyToken = createToken({name: "MULTIPLY", pattern: /\*/, label: '"*"'});
 export const multiplyFeature = createFeature<{
     CST: [IASTExpression, ICSTLeaf, IASTExpression];
-    AST: {factor1: IASTExpression; factor2: IASTExpression};
+    AST: {factor1: IRecursive<IASTExpression>; factor2: IRecursive<IASTExpression>};
     name: "multiply";
 }>({
     name: "multiply",
@@ -23,11 +24,13 @@ export const multiplyFeature = createFeature<{
         },
         precedence: {lowerThan: numberBaseFeature},
     },
-    abstract({children: [factor1, op, factor2]}, source) {
-        return {
-            factor1,
-            factor2,
-            source,
-        };
-    },
+    abstract: ({children: [factor1, op, factor2]}) => ({
+        factor1,
+        factor2,
+    }),
+    recurse: ({factor1, factor2, ...rest}, recurse) => ({
+        factor1: recurse(factor1),
+        factor2: recurse(factor2),
+        ...rest,
+    }),
 });
