@@ -4,6 +4,10 @@ import {createCSTDataIdentifier} from "../../parser/CST/createCSTDataIdentifier"
 import {IASTExpression} from "../../_types/AST/IASTExpression";
 import {addFeature} from "../addFeature";
 import {leftBracketToken, rightBracketToken} from "../groupBaseFeature";
+import {obtainAllPossibleGroupOptions} from "./obtainAllPossibleGroupOptions";
+import {createSkipSameOperationValidation} from "./validations/createSkipSameOperatorAssociationValidation";
+import {removeBaseOperatorGroupValidation} from "./validations/removeBaseOperatorGroupValidation";
+import {removeRedundantGroupValidation} from "./validations/removeRedudantGroupValidation";
 
 export const leftBracketRecoveryToken = createToken({name: "LEFT-BRACKET-RECOVERY"});
 const createRecoveryToken = (i: number) =>
@@ -62,6 +66,14 @@ export const groupRecoveryFeature = createFeature<{
 
             // If everything failed, return the parsed result as normal
             return parser.subrule(0, nextRule);
+        },
+        correctionSuggestions: {
+            getTrees: (tree, validate) => obtainAllPossibleGroupOptions(tree, validate),
+            defaultValidation: [
+                createSkipSameOperationValidation(["add", "multiply"]),
+                removeRedundantGroupValidation,
+            ],
+            generationPerformsValidation: true,
         },
     },
     abstract: child => child,

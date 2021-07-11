@@ -9,7 +9,7 @@ export type IValidateCSTTree = {
      * @param tree The tree to be verified
      * @returns Whether the tree is valid, or a valid replacement tree
      */
-    isTreeValid(tree: ICST): void | boolean | ICST;
+    isTreeValid(tree: ICSTNode): void | boolean | ICSTNode;
 };
 
 export type IValidateCSTNode<T extends ICSTNode> = {
@@ -19,5 +19,5 @@ export type IValidateCSTNode<T extends ICSTNode> = {
      * @param path The path to the specified node
      * @returns Whether the tree is valid, or a valid replacement node
      */
-    isNodeValid(node: T, path: ICSTNode[]): void | boolean | T;
+    isNodeValid(node: T, path: ICSTNode[]): void | boolean | ICSTNode;
 };

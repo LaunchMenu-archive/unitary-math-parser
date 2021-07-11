@@ -14,7 +14,8 @@ export const multiplyFeature = createFeature<{
     name: "multiply",
     parse: {
         tokens: [multiplyToken],
-        type: "suffix",
+        type: "infix",
+        associativity: "left",
         exec(node, {nextRule, parser, createNode, createLeaf}) {
             const {addChild, finish} = createNode();
             addChild(node);

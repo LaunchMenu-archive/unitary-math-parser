@@ -1,9 +1,6 @@
 import {IToken} from "chevrotain";
 import {IASTResult} from "./AST/IASTResult";
-import {TGetPlainAST} from "./AST/TGetPlainAST";
-import {TGetSyntaxASTType} from "./AST/TGetSyntaxASTType";
-import {TMakeASTRecursive} from "./AST/TMakeASTRecursive";
-import {ICST} from "./CST/ICST";
+import {IAlternativeCSTValidation} from "./CST/IAlternativeCSTValidation";
 import {ICSTResult} from "./CST/ICSTResult";
 import {IUnknownCharacterError} from "./errors/IUnknownCharacterError";
 import {IFeatureSyntax} from "./IFeatureSyntax";
@@ -24,8 +21,12 @@ export type IParsingResult<C extends IParserConfig> = {
     get ast(): IASTResult<C>;
     /** Checks whether the result contains a correction */
     get containsCorrection(): boolean;
-    /** All the correction alternatives for this CST */
-    get correctionAlternatives(): Generator<
-        Omit<IParsingResult<C>, "correctionAlternatives">
-    >;
+    /**
+     * Retrieves all the correction alternatives for this CST
+     * @param validations The validations to use in order to skip some alternatives
+     * @returns The generator to obtain all alternatives
+     */
+    getCorrectionAlternatives(
+        validations?: IAlternativeCSTValidation<IFeatureSyntax>[]
+    ): Generator<Omit<IParsingResult<C>, "correctionAlternatives">>;
 };

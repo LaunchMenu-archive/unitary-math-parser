@@ -1,6 +1,7 @@
 import {isLeaf} from "../../parser/CST/isLeaf";
+import {reconstructTree, replaceChild} from "../../parser/CST/reconstructTree";
+import {validateTree} from "../../parser/CST/validateTree";
 import {ICST} from "../../_types/CST/ICST";
-import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {ICSTNode} from "../../_types/CST/ICSTNode";
 import {IValidateCST} from "../../_types/CST/IValidateCST";
 
@@ -230,9 +231,9 @@ import {IValidateCST} from "../../_types/CST/IValidateCST";
  * @returns A generator to obtain all valid options except the passed option
  */
 export function* obtainAllAlternativeGroupOptions(
-    tree: ICST,
-    validate?: IValidateCST<ICSTNode>
-): Generator<ICST> {
+    tree: ICSTNode,
+    validate?: IValidateCST<ICSTNode>[]
+): Generator<ICSTNode> {
     let first = true;
     const generator = obtainAllPossibleGroupOptions(tree, validate);
     // The first tree that's returned is just the original tree
@@ -252,10 +253,10 @@ export function* obtainAllAlternativeGroupOptions(
  * @returns A generator to obtain all valid options
  */
 export function* obtainAllPossibleGroupOptions(
-    tree: ICST,
-    validate?: IValidateCST<ICSTNode>,
+    tree: ICSTNode,
+    validate?: IValidateCST<ICSTNode>[],
     left: boolean = true
-): Generator<ICST> {
+): Generator<ICSTNode> {
     // If we're trying the left side trees, take the product with all right-side trees
     const otherSideTrees = left
         ? obtainAllPossibleGroupOptions(tree, validate, false)
@@ -276,9 +277,13 @@ export function* obtainAllPossibleGroupOptions(
 
         // Repeat the process for all options for subtrees
         const recoveryNodeChild = recoveryNode.children[1];
-        const groupSubtrees = obtainAllPossibleGroupOptions(recoveryNodeChild);
+        if (isLeaf(recoveryNodeChild)) continue;
+        const groupSubtrees = obtainAllPossibleGroupOptions(recoveryNodeChild, validate);
         subtree: for (let subtree of groupSubtrees) {
-            let recoveryPath = reconstructTree(baseRecoveryPath, subtree);
+            let recoveryPath = reconstructTree(
+                [...baseRecoveryPath, recoveryNodeChild],
+                subtree
+            ).slice(0, -1);
 
             yield recoveryPath[0];
 
@@ -308,7 +313,7 @@ export function* obtainAllPossibleGroupOptions(
                 recoveryPath = newTree.recoveryGroupPath;
 
                 const returnTree = validateTree(baseTree, recoveryPath, validate);
-                if (returnTree) yield returnTree;
+                if (returnTree && !isLeaf(returnTree)) yield returnTree;
             }
         }
     }
@@ -490,79 +495,12 @@ export function insertInPath(
 }
 
 /**
- * Reconstructs a tree given a recovery path and its new subtree
- * @param recoveryPath The path to the recovery group node
- * @param subtree The new subtree of the recovery group node
- * @returns The path to the new recovery group node
- */
-export function reconstructTree(recoveryPath: ICSTNode[], subtree: ICST): ICSTNode[] {
-    const group = recoveryPath[recoveryPath.length - 1];
-    const newPath = recoveryPath.reduceRight(
-        ({orNode, newNode, path}, pathNode) => {
-            const nextNode = replaceChild(pathNode, orNode, newNode);
-            return {
-                orNode: pathNode,
-                newNode: nextNode,
-                path: [nextNode, ...path],
-            };
-        },
-        {orNode: group.children[1], newNode: subtree, path: [] as ICSTNode[]}
-    );
-    return newPath.path;
-}
-
-/**
- * Checks whether a given tree is valid, and returns undefined if it's not
- * @param tree The tree to be checked
- * @param path The path to the changed group node
- * @param validate The checking function
- * @returns The validated tree
- */
-export function validateTree(
-    tree: ICST,
-    path: ICSTNode[],
-    validate?: IValidateCST<ICSTNode>
-): ICST | undefined {
-    if (!validate) return tree;
-
-    if ("isTreeValid" in validate) {
-        const result = validate.isTreeValid(tree);
-        if (typeof result == "boolean") return result ? tree : undefined;
-        return result ? result : undefined;
-    }
-
-    if ("isNodeValid" in validate) {
-        const result = validate.isNodeValid(path[path.length - 1], path);
-        if (typeof result == "boolean") return result ? tree : undefined;
-        if (result) {
-            const newPath = reconstructTree(path, result);
-            return newPath[newPath.length - 1];
-        }
-        return undefined;
-    }
-}
-
-/**
  * Retrieves the right-most child of a given node
  * @param node The node to retrieve the child fork
  * @returns The found child if any
  */
 export function getRightChild(node: ICSTNode): ICST | undefined {
     return node.children[node.children.length - 1];
-}
-
-/**
- * Retrieves a node representing the specified node, with a child node replaced for a new node
- * @param node The node to be changed
- * @param oldNode The child node to replace
- * @param newNode The new node to take the child node's place
- * @returns The newly created node
- */
-export function replaceChild(node: ICSTNode, oldNode: ICST, newNode: ICST): ICSTNode {
-    return {
-        ...node,
-        children: node.children.map(child => (child == oldNode ? newNode : child)),
-    };
 }
 
 // Guards

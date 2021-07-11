@@ -3,7 +3,7 @@ import {IUnknownCharacterError} from "../../_types/errors/IUnknownCharacterError
 import {IParserConfig} from "../../_types/IParserConfig";
 import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
 import {ITokenizerResult} from "../_types/ITokenizerResult";
-import {resolveTokenTypes} from "./CSTParser";
+import {resolveTokenTypes} from "./CSTParserBase";
 
 export class Tokenizer {
     /** The lexer to tokenize the input */

@@ -14,7 +14,8 @@ export const addFeature = createFeature<{
     name: "add",
     parse: {
         tokens: [addToken],
-        type: "suffix",
+        type: "infix",
+        associativity: "left",
         exec(node, {nextRule, parser, createNode, createLeaf}) {
             const {addChild, finish} = createNode();
             addChild(node);

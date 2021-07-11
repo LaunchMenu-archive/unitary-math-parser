@@ -1,9 +1,9 @@
-import {ICST} from "./ICST";
 import {ICSTLeaf} from "./ICSTLeaf";
+import {ICSTNode} from "./ICSTNode";
 
 export type ICSTResult = {
     /** The tree that was obtained */
-    tree: ICST;
+    tree: ICSTNode;
     /**
      * Walks a tree and reduces it to some result
      * @param base The base case for the tree walk

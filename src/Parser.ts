@@ -21,6 +21,8 @@ import {TGetReductionASTNode} from "./_types/AST/TGetReductionASTNode";
 import {ASTParser} from "./parser/AST/ASTParser";
 import {isLeaf} from "./parser/CST/isLeaf";
 import {IASTResult} from "./_types/AST/IASTResult";
+import {ICSTNode} from "./_types/CST/ICSTNode";
+import {IAlternativeCSTValidation} from "./_types/CST/IAlternativeCSTValidation";
 
 export class Parser<C extends IParserConfig> {
     protected config: C;
@@ -64,9 +66,20 @@ export class Parser<C extends IParserConfig> {
         if ("errors" in CST) return CST;
 
         const result = this.createParseReturn(tokens, CST);
-        Object.defineProperty(result, "correctionAlternatives", {
-            get: () => {},
+
+        // Add alternatives to output
+        const This = this;
+        Object.defineProperty(result, "getCorrectionAlternatives", {
+            value: function* (
+                validations: IAlternativeCSTValidation<IFeatureSyntax>[] = []
+            ) {
+                for (let alt of This.getCSTAlternatives(CST, validations)) {
+                    yield This.createParseReturn(tokens, alt);
+                }
+            },
         });
+
+        // Return the overall result
         return result as IParseOutput<C, typeof ignoreTokenizationErrors>;
     }
 
@@ -77,8 +90,8 @@ export class Parser<C extends IParserConfig> {
      */
     protected createParseReturn(
         tokens: ITokenizerResult,
-        CST: ICST
-    ): Omit<IParsingResult<C>, "correctionAlternatives"> {
+        CST: ICSTNode
+    ): Omit<IParsingResult<C>, "getCorrectionAlternatives"> {
         const AST = createCached<IASTResult<C>>(() => {
             const ast = this.getAST(CST);
             return {
@@ -86,6 +99,7 @@ export class Parser<C extends IParserConfig> {
                 reduce: step => this.reduceAST(step, ast),
             };
         });
+        const containsCorrect = createCached(() => this.containsCorrection(CST));
 
         return {
             tokenization: {
@@ -97,7 +111,7 @@ export class Parser<C extends IParserConfig> {
                 reduce: (base, step) => this.reduceCST(base, step, CST),
             },
             get containsCorrection() {
-                return false;
+                return containsCorrect();
             },
             get ast() {
                 return AST();
@@ -120,7 +134,10 @@ export class Parser<C extends IParserConfig> {
      * @param input The input to retrieve a CST for
      * @returns The CST or parsing errors
      */
-    public getCST(tokens: IToken[], input: string): ICST | {errors: ICSTParsingError[]} {
+    public getCST(
+        tokens: IToken[],
+        input: string
+    ): ICSTNode | {errors: ICSTParsingError[]} {
         return this.cstParser.parse(tokens, input);
     }
 
@@ -152,6 +169,32 @@ export class Parser<C extends IParserConfig> {
         tree: ICST
     ): O {
         return this.cstParser.reduce(base, step, tree);
+    }
+
+    /**
+     * Checks whether a given tree contains an automatic correction
+     * @param CST The CST to check
+     * @returns Whether the CST contains an error correction
+     */
+    public containsCorrection(CST: ICSTNode): boolean {
+        return this.reduceCST(
+            node => node.isRecovery ?? false,
+            (t, children) => children.some(isRecovery => isRecovery),
+            CST
+        );
+    }
+
+    /**
+     * Computes alternative CSTs for a given tree, assuming the tree contained auto corrections
+     * @param CST The CST tree to compute alternatives for
+     * @param validations Validations to skip some of the trees in the output
+     * @returns The generator for different CST options
+     */
+    public getCSTAlternatives(
+        CST: ICSTNode,
+        validations: IAlternativeCSTValidation<IFeatureSyntax>[] = []
+    ): Generator<ICSTNode> {
+        return this.cstParser.computeAlternatives(CST, validations);
     }
 
     /**
