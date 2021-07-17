@@ -1,6 +1,6 @@
 import {IBaseFeature} from "./_types/IBaseFeature";
 import {IFeatureSyntax} from "./_types/IFeatureSyntax";
-import {IOptionalRecurseFunc} from "./_types/IRecurseFunc";
+import {IExecutionFuncs, IOptionalExecutionFuncs} from "./_types/IExecutionFunc";
 
 /**
  * Creates a new feature
@@ -8,7 +8,8 @@ import {IOptionalRecurseFunc} from "./_types/IRecurseFunc";
  * @returns The created feature
  */
 export function createBaseFeature<T extends IFeatureSyntax>(
-    feature: Omit<IBaseFeature<T>, "recurse"> & IOptionalRecurseFunc<T>
+    feature: Omit<IBaseFeature<T>, keyof IExecutionFuncs<any>> &
+        IOptionalExecutionFuncs<T>
 ): IBaseFeature<T> {
     return feature as any;
 }

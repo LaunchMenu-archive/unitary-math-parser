@@ -12,7 +12,7 @@ export function createCSTLeaf(token: IToken): ICSTLeaf {
         text: token.image,
         range: {
             start: token.startOffset,
-            end: token.endOffset ? token.endOffset + 1 : token.startOffset,
+            end: (token.endOffset ? token.endOffset : token.startOffset) + 1,
         },
     };
 }

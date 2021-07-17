@@ -22,7 +22,6 @@ export function createCSTNodeCreator(
     const children: (ICSTNode | ICSTLeaf)[] = [];
     return {
         addChild(child: ICSTLeaf | ICSTNode) {
-            if (!child?.range) return; // Makes sure that this doesn't error in the recording phase
             children.push(child);
         },
         finish() {
@@ -31,8 +30,12 @@ export function createCSTNodeCreator(
                 children,
                 ...expressionData,
                 range: {
-                    start: Math.min(...children.map(child => child.range.start)),
-                    end: Math.max(...children.map(child => child.range.end)),
+                    start: Math.min(
+                        ...children.map(child => child?.range?.start ?? Infinity)
+                    ),
+                    end: Math.max(
+                        ...children.map(child => child?.range?.end ?? -Infinity)
+                    ),
                 },
             };
         },

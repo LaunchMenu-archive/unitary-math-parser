@@ -1,7 +1,7 @@
 import {IFeatureSyntax} from "./_types/IFeatureSyntax";
 import {v4 as uuid} from "uuid";
 import {IFeatureSupport} from "./_types/IFeatureSupport";
-import {IOptionalRecurseFunc} from "./_types/IRecurseFunc";
+import {IExecutionFuncs, IOptionalExecutionFuncs} from "./_types/IExecutionFunc";
 
 /**
  * Creates a new feature support rule
@@ -9,7 +9,8 @@ import {IOptionalRecurseFunc} from "./_types/IRecurseFunc";
  * @returns The created feature support
  */
 export function createFeatureSupport<T extends IFeatureSyntax>(
-    feature: Omit<IFeatureSupport<T>, "id" | "recurse"> & IOptionalRecurseFunc<T>
+    feature: Omit<IFeatureSupport<T>, "id" | keyof IExecutionFuncs<any>> &
+        IOptionalExecutionFuncs<T>
 ): IFeatureSupport<T> {
     return {
         id: uuid(),

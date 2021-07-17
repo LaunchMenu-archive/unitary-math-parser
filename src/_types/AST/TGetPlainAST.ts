@@ -1,9 +1,9 @@
 import {IASTBase} from "./IASTBase";
-import {IRecursive} from "./IRecursive";
+import {IRecursive, IRP} from "./IRecursive";
 import {TIsRecursiveNode} from "./TMakeASTRecursive";
 
 /**
- * Obtain the plain node for a given AST node, with all recursion data extracted
+ * Obtain the plain node for a given AST node, with all recursion indicators removed
  * @param T The node to be converted
  */
 export type TGetPlainAST<T extends IASTBase> = T extends infer U
@@ -27,10 +27,12 @@ type TRecursiveMap<T> = T extends IASTBase
     ? TGetPlainAST<T>
     : T extends IRecursive<infer N>
     ? TRecursiveMap<N>
-    : T extends Array<any>
-    ? TMapArray<T>
-    : T extends object
-    ? TMapObject<T>
+    : T extends IRP<infer U>
+    ? U extends Array<any>
+        ? TMapArray<U>
+        : U extends object
+        ? TMapObject<T>
+        : U
     : T;
 
 type TMapArray<T extends Array<any>> = T extends [infer F, ...infer R]

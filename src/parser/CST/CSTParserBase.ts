@@ -25,6 +25,8 @@ import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {isLeaf} from "./isLeaf";
 import {ICSTNode} from "../../_types/CST/ICSTNode";
+import {IErrorObject} from "../../_types/IErrorObject";
+import {createErrorObject} from "../createErrorsObject";
 
 let tokenTypes: TokenType[];
 export class CSTParserBase extends EmbeddedActionsParser {
@@ -99,7 +101,7 @@ export class CSTParserBase extends EmbeddedActionsParser {
     public parse(
         tokens: IToken[],
         text: string
-    ): ICSTNode | {errors: ICSTParsingError[]} {
+    ): ICSTNode | IErrorObject<ICSTParsingError> {
         // Init parser
         this.trackingData = {};
         const initData = {parser: this as any, tokens, input: text};
@@ -112,7 +114,7 @@ export class CSTParserBase extends EmbeddedActionsParser {
 
         // Parse
         const result = this.expression();
-        if (this.errors.length > 0) return {errors: this.getErrors(text)};
+        if (this.errors.length > 0) return createErrorObject(this.getErrors(text));
 
         return result;
     }
@@ -135,13 +137,13 @@ export class CSTParserBase extends EmbeddedActionsParser {
                             error.token.image
                         }" at index ${
                             error.token.startOffset
-                        }, but expected either ${this.getSuggestionsString(suggestions)}`,
+                        }, but expected ${this.getSuggestionsString(suggestions)}`,
                         multilineMessage: `Found unexpected character "${
                             error.token.image
                         }":\n${getSyntaxPointerMessage(
                             input,
                             error.token.startOffset
-                        )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                        )}\nExpected ${this.getSuggestionsString(suggestions)}`,
                         suggestions,
                         token: error.token,
                     };
@@ -153,13 +155,13 @@ export class CSTParserBase extends EmbeddedActionsParser {
                             error.token.image
                         }" at index ${
                             error.token.startOffset
-                        }, but expected either ${this.getSuggestionsString(suggestions)}`,
+                        }, but expected ${this.getSuggestionsString(suggestions)}`,
                         multilineMessage: `Found unexpected character "${
                             error.token.image
                         }":\n${getSyntaxPointerMessage(
                             input,
                             error.token.startOffset
-                        )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                        )}\nExpected ${this.getSuggestionsString(suggestions)}`,
                         suggestions,
                         token: error.token,
                     };
@@ -188,7 +190,7 @@ export class CSTParserBase extends EmbeddedActionsParser {
                         }":\n${getSyntaxPointerMessage(
                             input,
                             error.token.startOffset
-                        )}\nExpected either ${this.getSuggestionsString(suggestions)}`,
+                        )}\nExpected ${this.getSuggestionsString(suggestions)}`,
                         expected: suggestions[0][0],
                         token: error.token,
                     };
@@ -237,7 +239,10 @@ export class CSTParserBase extends EmbeddedActionsParser {
         const suggestionNames = suggestions.map(([s]) => s?.LABEL ?? s.name);
         const firstSuggestions = suggestionNames.slice(0, suggestions.length - 2);
         const lastSuggestionText = suggestionNames.splice(suggestions.length - 2);
-        return [...firstSuggestions, lastSuggestionText.join(" or ")].join(", ");
+        return (
+            (suggestions.length > 1 ? "either " : "") +
+            [...firstSuggestions, lastSuggestionText.join(" or ")].join(", ")
+        );
     }
 
     // Parser generation code
@@ -407,9 +412,15 @@ export class CSTParserBase extends EmbeddedActionsParser {
         const processingTag = Symbol();
         const processedTag = Symbol();
         function recursiveCreateFeatureOrder(
-            features: (IFeature & {[processedTag]?: boolean; [processingTag]?: boolean})[]
+            recurseFeatures: (IFeature & {
+                [processedTag]?: boolean;
+                [processingTag]?: boolean;
+            })[]
         ): IFeature[] {
-            return features.flatMap<IFeature>(feature => {
+            return recurseFeatures.flatMap<IFeature>(feature => {
+                const isKnownFeature = features.includes(feature);
+                if (!isKnownFeature) return [];
+
                 if (processedTag in feature) return [];
                 if (processingTag in feature)
                     throw Error(
@@ -424,9 +435,12 @@ export class CSTParserBase extends EmbeddedActionsParser {
                             ? precedence.lowerThan
                             : precedence.sameAs;
 
-                    if (isFeature(dependency))
-                        return [...recursiveCreateFeatureOrder([dependency]), feature];
-                    return [feature];
+                    return [
+                        ...recursiveCreateFeatureOrder(
+                            dependency.filter((dep): dep is IFeature => isFeature(dep))
+                        ),
+                        feature,
+                    ];
                 } finally {
                     delete feature[processingTag];
                     feature[processedTag] = true;
@@ -458,32 +472,45 @@ export class CSTParserBase extends EmbeddedActionsParser {
             if ("lowerThan" in parse.precedence) {
                 const lowerThan = parse.precedence.lowerThan;
                 layer = {prefix: [], suffix: []};
-                const index = layers.findIndex(layer =>
-                    [...layer.prefix, ...layer.suffix].find(
-                        ({name}) => name == lowerThan.name
-                    )
-                );
-                if (index == -1)
+                const index = layers
+                    .map((layer, index) => ({layer, index}))
+                    .reverse()
+                    .find(({layer}) =>
+                        [...layer.prefix, ...layer.suffix].find(({name}) =>
+                            lowerThan.find(dep => dep.name == name)
+                        )
+                    )?.index;
+                if (index == undefined)
                     throw Error(
-                        `Feature "${name}" specified to have a lower precedence than "${lowerThan.name}", but "${lowerThan.name}" wasn't provided. \n Make sure that it's provided in the list of features, or change the 'lowerThan' property.`
+                        `Feature "${name}" specified to have a lower precedence than ${lowerThan
+                            .map(({name}) => `"${name}"`)
+                            .join(
+                                ";"
+                            )}, but none of them were provided. \n Make sure that one of them is provided in the list of features, or change the 'lowerThan' property.`
                     );
 
                 layers.splice(index + 1, 0, layer);
             } else {
                 const sameAs = parse.precedence.sameAs;
-                const foundLayer = layers.find(layer =>
-                    [...layer.prefix, ...layer.suffix].find(
-                        ({name}) => name == sameAs.name
-                    )
-                );
+                const foundLayer = layers.find(layer => {
+                    const foundFeature = [...layer.prefix, ...layer.suffix].find(
+                        ({name}) => sameAs.find(dep => dep.name == name)
+                    );
+                    if (foundFeature && isFeature(foundFeature))
+                        relativeTo = foundFeature;
+                    return foundFeature;
+                });
 
                 if (!foundLayer)
                     throw Error(
-                        `Feature "${name}" specified to have the same precedence as "${sameAs.name}", but "${sameAs.name}" wasn't provided. \n Make sure that it's provided in the list of features, or change the 'sameAs' property.`
+                        `Feature "${name}" specified to have the same precedence as ${sameAs
+                            .map(({name}) => `"${name}"`)
+                            .join(
+                                ";"
+                            )}, but none of them were provided. \n Make sure that one of them is provided in the list of features, or change the 'sameAs' property.`
                     );
 
                 layer = foundLayer as {prefix: IFeature[]; suffix: IFeature[]};
-                relativeTo = sameAs;
                 after = parse.precedence.matchAfter ?? false;
             }
 
@@ -493,7 +520,7 @@ export class CSTParserBase extends EmbeddedActionsParser {
                 conversions[parse.type as keyof typeof conversions] ?? parse.type;
             const list = layer[type];
             const relativeIndex =
-                relativeTo && list.findIndex(({name}) => relativeTo?.name);
+                relativeTo && list.findIndex(({name}) => name == relativeTo?.name);
             const index = relativeIndex ? (after ? 1 : 0) + relativeIndex : 0;
             list.splice(index, 0, feature);
         });

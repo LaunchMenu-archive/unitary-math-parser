@@ -2,7 +2,7 @@ import {IParserConfig} from "../IParserConfig";
 import {TGetAllFeatures} from "../TGetAllFeatures";
 import {TGetParserConfigSyntax} from "../TGetParserConfigSyntax";
 import {IASTBase} from "./IASTBase";
-import {IRecursive} from "./IRecursive";
+import {IRecursive, IRP} from "./IRecursive";
 import {TGetASTBaseBody} from "./TGetASTBaseBody";
 import {TGetSyntaxASTType} from "./TGetSyntaxASTType";
 import {TMakeASTRecursive} from "./TMakeASTRecursive";
@@ -37,12 +37,14 @@ type TRecursiveValues<T, B> = B extends true
     ? T
     : TRecursiveValuesSubtypes<T, B>;
 
-type TRecursiveValuesSubtypes<T, B> = T extends IASTBase
-    ? never
-    : T extends Array<any>
-    ? TRecursiveValuesArray<T, B>
-    : T extends object
-    ? TRecursiveValuesObject<T, B>
+type TRecursiveValuesSubtypes<T, B> = T extends IRP<infer P>
+    ? P extends IASTBase
+        ? never
+        : P extends Array<any>
+        ? TRecursiveValuesArray<P, B>
+        : P extends object
+        ? TRecursiveValuesObject<P, B>
+        : never
     : never;
 
 type TRecursiveValuesArray<T extends Array<any>, B> = T extends []

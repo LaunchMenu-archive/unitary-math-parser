@@ -1,21 +1,15 @@
 import {IToken} from "chevrotain";
-import {createASTParser} from "./parser/AST/createASTParser";
 import {CSTParser} from "./parser/CST/CSTParser";
 import {Tokenizer} from "./parser/CST/Tokenizer";
 import {IParseOutput} from "./parser/_types/IParseOutput";
 import {ITokenizerResult} from "./parser/_types/ITokenizerResult";
-import {TGetSyntaxASTType} from "./_types/AST/TGetSyntaxASTType";
-import {TMakeASTRecursive} from "./_types/AST/TMakeASTRecursive";
 import {ICST} from "./_types/CST/ICST";
 import {ICSTLeaf} from "./_types/CST/ICSTLeaf";
-import {ICSTParsingError, IParsingError} from "./_types/errors/IParsingError";
-import {IUnknownCharacterError} from "./_types/errors/IUnknownCharacterError";
+import {ICSTParsingError} from "./_types/errors/IParsingError";
 import {IFeatureSyntax} from "./_types/IFeatureSyntax";
 import {IParserConfig} from "./_types/IParserConfig";
 import {IParsingResult} from "./_types/IParsingResult";
-import {TGetAllFeatures} from "./_types/TGetAllFeatures";
 import {TGetConfigOutputAST} from "./_types/AST/TGetConfigOutputAST";
-import {TGetParserConfigSyntax} from "./_types/TGetParserConfigSyntax";
 import {TGetConfigReachableAST} from "./_types/AST/TGetConfigReachableFeatureSyntax";
 import {TGetReductionASTNode} from "./_types/AST/TGetReductionASTNode";
 import {ASTParser} from "./parser/AST/ASTParser";
@@ -23,6 +17,10 @@ import {isLeaf} from "./parser/CST/isLeaf";
 import {IASTResult} from "./_types/AST/IASTResult";
 import {ICSTNode} from "./_types/CST/ICSTNode";
 import {IAlternativeCSTValidation} from "./_types/CST/IAlternativeCSTValidation";
+import {createErrorObject} from "./parser/createErrorsObject";
+import {IErrorObject} from "./_types/IErrorObject";
+import {EvaluationContext} from "./parser/AST/EvaluationContext";
+import {IEvaluationErrorObject} from "./_types/evaluation/IEvaluationErrorObject";
 
 export class Parser<C extends IParserConfig> {
     protected config: C;
@@ -49,6 +47,21 @@ export class Parser<C extends IParserConfig> {
     }
 
     /**
+     * Evaluates the given expression
+     * @param expression The expression to be evaluated
+     * @param context The context to pass variables in, etc.
+     * @returns The result of the evaluation, or errors if evaluation failed
+     */
+    public evaluate(
+        expression: string,
+        context: EvaluationContext = new EvaluationContext()
+    ): object {
+        const result = this.parse(expression);
+        if ("errors" in result) return result;
+        return result.evaluate(context);
+    }
+
+    /**
      * Parses a given input string, and retrieves getters for all data relating to it
      * @param input The input string to be parsed
      * @param ignoreTokenizationErrors Whether to still compute the CST if unexpected characters are found
@@ -60,12 +73,12 @@ export class Parser<C extends IParserConfig> {
     ): IParseOutput<C, typeof ignoreTokenizationErrors> {
         const tokens = this.getTokens(input);
         if (!ignoreTokenizationErrors && tokens.errors.length > 0)
-            return {errors: tokens.errors};
+            return createErrorObject(tokens.errors);
 
         const CST = this.getCST(tokens.tokens, input);
         if ("errors" in CST) return CST;
 
-        const result = this.createParseReturn(tokens, CST);
+        const result = this.createParseReturn(input, tokens, CST);
 
         // Add alternatives to output
         const This = this;
@@ -74,7 +87,7 @@ export class Parser<C extends IParserConfig> {
                 validations: IAlternativeCSTValidation<IFeatureSyntax>[] = []
             ) {
                 for (let alt of This.getCSTAlternatives(CST, validations)) {
-                    yield This.createParseReturn(tokens, alt);
+                    yield This.createParseReturn(input, tokens, alt);
                 }
             },
         });
@@ -85,10 +98,13 @@ export class Parser<C extends IParserConfig> {
 
     /**
      * Creates the return for the parse function
-     * @param CST The CST to return the result for
+     * @param expression The expression that the data was extracted from
+     * @param tokens The tokenized expression
+     * @param CST The CST of the expression
      * @returns The parsing result
      */
     protected createParseReturn(
+        expression: string,
         tokens: ITokenizerResult,
         CST: ICSTNode
     ): Omit<IParsingResult<C>, "getCorrectionAlternatives"> {
@@ -116,6 +132,7 @@ export class Parser<C extends IParserConfig> {
             get ast() {
                 return AST();
             },
+            evaluate: context => this.evaluateAST(AST().tree, expression, context),
         };
     }
 
@@ -137,7 +154,7 @@ export class Parser<C extends IParserConfig> {
     public getCST(
         tokens: IToken[],
         input: string
-    ): ICSTNode | {errors: ICSTParsingError[]} {
+    ): ICSTNode | IErrorObject<ICSTParsingError> {
         return this.cstParser.parse(tokens, input);
     }
 
@@ -218,6 +235,21 @@ export class Parser<C extends IParserConfig> {
         tree: TGetConfigOutputAST<C>
     ): O {
         return this.astParser.reduce(step, tree);
+    }
+
+    /**
+     * Evaluates a given tree to obtain its result
+     * @param tree The tree to be evaluated
+     * @param expression The text of the expression (which was transformed into the tree) used for error message creation
+     * @param context The contextual data that nodes can use during evaluation
+     * @returns The obtained value
+     */
+    public evaluateAST(
+        tree: TGetConfigOutputAST<C>,
+        expression: string,
+        context: EvaluationContext = new EvaluationContext()
+    ): Object {
+        return this.astParser.evaluate(tree, context, expression);
     }
 }
 

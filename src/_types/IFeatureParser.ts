@@ -61,11 +61,11 @@ export type IFeatureParserBase<T extends IFeatureSyntax> = {
     precedence:
         | {
               /** Specifies the precedence should be just lower than that of another feature */
-              lowerThan: IFeaturePrecedenceTarget;
+              lowerThan: IFeaturePrecedenceTarget[];
           }
         | {
               /** Specifies the precedence should be the same as another feature*/
-              sameAs: IFeature<IFeatureSyntax>;
+              sameAs: IFeature<IFeatureSyntax>[];
               /** Specifies to try and match this feature after the one it has the same precedence to (in case there is overlap between the syntax they match) */
               matchAfter?: boolean;
           };

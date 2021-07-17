@@ -1,19 +1,20 @@
 import {createToken} from "chevrotain";
 import {createFeature} from "../createFeature";
-import {IASTExpression} from "../_types/AST/IASTExpression";
-import {IRecursive} from "../_types/AST/IRecursive";
-import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
+import {implicitMultiplyFeature, multiplyEvaluator} from "./implicitMultiplyFeature";
 import {numberBaseFeature} from "./numberBaseFeature";
+import {spaceToken} from "./util/spaceToken";
+import {IBinaryASTData} from "./util/_types/IBinaryASTData";
+import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
 
 export const multiplyToken = createToken({name: "MULTIPLY", pattern: /\*/, label: '"*"'});
 export const multiplyFeature = createFeature<{
-    CST: [IASTExpression, ICSTLeaf, IASTExpression];
-    AST: {factor1: IRecursive<IASTExpression>; factor2: IRecursive<IASTExpression>};
+    CST: IBinaryCSTData;
+    AST: IBinaryASTData;
     name: "multiply";
 }>({
     name: "multiply",
     parse: {
-        tokens: [multiplyToken],
+        tokens: [multiplyToken, spaceToken],
         type: "infix",
         associativity: "left",
         exec(node, {nextRule, parser, createNode, createLeaf}) {
@@ -23,15 +24,13 @@ export const multiplyFeature = createFeature<{
             addChild(parser.subrule(2, nextRule));
             return finish();
         },
-        precedence: {lowerThan: numberBaseFeature},
+        precedence: {lowerThan: [numberBaseFeature, implicitMultiplyFeature]},
     },
-    abstract: ({children: [factor1, op, factor2]}) => ({
-        factor1,
-        factor2,
-    }),
-    recurse: ({factor1, factor2, ...rest}, recurse) => ({
-        factor1: recurse(factor1),
-        factor2: recurse(factor2),
+    abstract: ({children: [left, op, right]}) => ({left, right}),
+    recurse: ({left, right, ...rest}, recurse) => ({
+        left: recurse(left),
+        right: recurse(right),
         ...rest,
     }),
+    evaluate: [multiplyEvaluator],
 });

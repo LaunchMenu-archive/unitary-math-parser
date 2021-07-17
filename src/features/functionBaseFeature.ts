@@ -2,10 +2,11 @@ import {createToken} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
 import {createFeatureSupport} from "../createFeatureSupport";
 import {IASTExpression} from "../_types/AST/IASTExpression";
-import {IRecursive} from "../_types/AST/IRecursive";
+import {IRecursive, IRP} from "../_types/AST/IRecursive";
 import {TGetASTType} from "../_types/AST/TGetASTType";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
+import {textToken} from "./unitOrVarBaseFeature";
 
 export const parameterSeparatorToken = createToken({
     name: "PARAMETER-SEPARATOR",
@@ -14,7 +15,7 @@ export const parameterSeparatorToken = createToken({
 });
 export const argumentsSupport = createFeatureSupport<{
     CST: (IASTExpression | ICSTLeaf)[];
-    AST: {args: IRecursive<IASTExpression>[]};
+    AST: {args: IRP<Array<IRecursive<IASTExpression>>>};
     name: "args";
 }>({
     name: "args",
@@ -40,29 +41,25 @@ export const argumentsSupport = createFeatureSupport<{
         ),
     }),
     recurse: ({args, ...rest}, recurse) => ({args: args.map(recurse), ...rest}),
+    evaluate: [],
 });
 
-export const functionNameToken = createToken({
-    name: "FUNCTION-NAME",
-    pattern: /[a-zA-Z_]\w+/,
-    label: "function-name",
-});
 export const functionBaseFeature = createBaseFeature<{
     name: "function";
     CST: [ICSTLeaf, ICSTLeaf, TGetASTType<typeof argumentsSupport>, ICSTLeaf];
     AST: {
         func: string;
-        args: IRecursive<IASTExpression>[];
+        args: IRP<Array<IRecursive<IASTExpression>>>;
     };
     supports: [typeof argumentsSupport];
 }>({
     name: "function",
     parse: {
-        tokens: [functionNameToken, leftBracketToken, rightBracketToken],
+        tokens: [textToken, leftBracketToken, rightBracketToken],
         supports: [argumentsSupport],
         exec({parser, createNode, createLeaf}) {
             const {addChild, finish} = createNode();
-            addChild(createLeaf(parser.consume(1, functionNameToken)));
+            addChild(createLeaf(parser.consume(1, textToken)));
             addChild(createLeaf(parser.consume(2, leftBracketToken)));
             addChild(parser.supportRule(0, argumentsSupport));
             addChild(createLeaf(parser.consume(3, rightBracketToken)));
@@ -78,4 +75,5 @@ export const functionBaseFeature = createBaseFeature<{
         args: args.map(recurse),
         ...rest,
     }),
+    evaluate: [],
 });

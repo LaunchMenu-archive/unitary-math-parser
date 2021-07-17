@@ -6,7 +6,6 @@ import {addFeature} from "../addFeature";
 import {leftBracketToken, rightBracketToken} from "../groupBaseFeature";
 import {obtainAllPossibleGroupOptions} from "./obtainAllPossibleGroupOptions";
 import {createSkipSameOperationValidation} from "./validations/createSkipSameOperatorAssociationValidation";
-import {removeBaseOperatorGroupValidation} from "./validations/removeBaseOperatorGroupValidation";
 import {removeRedundantGroupValidation} from "./validations/removeRedudantGroupValidation";
 
 export const leftBracketRecoveryToken = createToken({name: "LEFT-BRACKET-RECOVERY"});
@@ -27,7 +26,7 @@ export const groupRecoveryFeature = createFeature<{
             const rd = parser.getData(recoveryData);
             rd.topLevel = true; // Makes sure that no recovery is attempted during analysis, but is during actual parsing
         },
-        precedence: {lowerThan: addFeature},
+        precedence: {lowerThan: [addFeature]},
         exec({parser, nextRule}) {
             const rd = parser.getData(recoveryData);
             if (rd.topLevel) {

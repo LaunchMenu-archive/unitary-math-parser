@@ -44,7 +44,7 @@ export const prefixFeature = createFeature<{
             addChild(parser.subrule(2, nextRule));
             return finish();
         },
-        precedence: {sameAs: addFeature},
+        precedence: {sameAs: [addFeature]},
         correctionSuggestions: {
             getNodes: function* (node) {
                 yield node;
@@ -67,4 +67,5 @@ export const prefixFeature = createFeature<{
         val,
     }),
     recurse: ({val, ...rest}, recurse) => ({val: recurse(val), ...rest}),
+    evaluate: [],
 });

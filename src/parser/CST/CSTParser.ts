@@ -19,6 +19,7 @@ import {
 } from "../../_types/CST/IValidateCST";
 import {replaceChild} from "./reconstructTree";
 import {validateTree} from "./validateTree";
+import {IErrorObject} from "../../_types/IErrorObject";
 
 export class CSTParser extends CSTParserBase {
     protected featuresWithAlternatives: (IFeature | IBaseFeature | IFeatureSupport)[];
@@ -46,7 +47,7 @@ export class CSTParser extends CSTParserBase {
     public parse(
         tokens: IToken[],
         text: string
-    ): ICSTNode | {errors: ICSTParsingError[]} {
+    ): ICSTNode | IErrorObject<ICSTParsingError> {
         return super.parse(tokens, text);
     }
 

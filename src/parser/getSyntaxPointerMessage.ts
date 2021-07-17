@@ -1,18 +1,20 @@
 /**
  * Retrieves a string that visualizes the problematic index
  * @param text The text to point in
- * @param index The index to point at
+ * @param start The index to point at
  * @param maxPadding The maximum number of characters to see at either side of the pointed at index
  * @returns The string that points at the index
  */
 export function getSyntaxPointerMessage(
     text: string,
-    index: number,
+    start: number,
+    end: number = start + 1,
     maxPadding: number = 10
 ): string {
-    const start = Math.max(0, index - maxPadding);
-    const end = Math.min(index + maxPadding, text.length);
-    return `${start > 0 ? "…" : ""}${text.substring(start, end)}${
-        end < text.length ? "…" : ""
-    }\n${" ".repeat(index - start + (start > 0 ? 1 : 0)) + "^"}`;
+    const length = end - start;
+    const textStart = Math.max(0, start - maxPadding);
+    const textEnd = Math.min(start + length + maxPadding, text.length);
+    return `${textStart > 0 ? "…" : ""}${text.substring(textStart, textEnd)}${
+        textEnd < text.length ? "…" : ""
+    }\n${" ".repeat(start - textStart + (textStart > 0 ? 1 : 0)) + "^".repeat(length)}`;
 }

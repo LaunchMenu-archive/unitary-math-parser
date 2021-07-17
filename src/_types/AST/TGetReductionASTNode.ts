@@ -1,7 +1,8 @@
 import {IASTBase} from "./IASTBase";
-import {IRecursive} from "./IRecursive";
+import {IRecursive, IRP} from "./IRecursive";
 import {TGetASTBaseBody} from "./TGetASTBaseBody";
 import {TIsRecursiveNode} from "./TMakeASTRecursive";
+
 /**
  * Obtain the reduction node for a given AST node
  * @param T The node to be converted
@@ -16,16 +17,23 @@ export type TGetReductionASTNode<
     T,
     B,
     T extends IASTBase<infer N, infer C>
-        ? IASTBase<N, TRecursiveMap<TGetASTBaseBody<T>, B, L>>
+        ? IASTBase<
+              N,
+              TGetASTBaseBody<T> extends infer D
+                  ? {[K in keyof D]: TRecursiveMap<D[K], B, L>}
+                  : never
+          >
         : never
 >;
 
 type TRecursiveMap<T, B, L> = T extends L
     ? B
-    : T extends Array<any>
-    ? TMapArray<T, B, L>
-    : T extends object
-    ? TMapObject<T, B, L>
+    : T extends IRP<infer U>
+    ? U extends Array<any>
+        ? TMapArray<U, B, L>
+        : U extends object
+        ? TMapObject<U, B, L>
+        : U
     : T;
 
 type TMapArray<T extends Array<any>, B, L> = T extends [infer F, ...infer R]
