@@ -6,7 +6,7 @@ export const [length, meter] = createDimension({
     priority: 0,
     unit: {
         name: "meter",
-        alias: ["m"],
+        alias: ["m", "meters"],
     },
 });
 

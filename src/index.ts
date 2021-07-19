@@ -1,6 +1,6 @@
 import {addFeature} from "./features/addFeature";
 import {groupRecoveryFeature} from "./features/groupRecovery/groupRecoveryFeature";
-import {functionBaseFeature} from "./features/functionBaseFeature";
+import {functionBaseFeature} from "./features/functions/functionBaseFeature";
 import {multiplyFeature} from "./features/multiplyFeature";
 import {numberBaseFeature} from "./features/numberBaseFeature";
 import {prefixFeature} from "./features/prefixTestFeature";
@@ -9,30 +9,47 @@ import {groupRecoveryBaseFeature} from "./features/groupRecovery/groupRecoveryBa
 import {ICST} from "./_types/CST/ICST";
 import {isError} from "./parser/isError";
 import {isNumber} from "./features/util/number/isNumber";
-import {unitOrVarBaseFeature} from "./features/unitOrVarBaseFeature";
+import {unitOrVarBaseFeature} from "./features/variables/unitOrVarBaseFeature";
 import {subtractFeature} from "./features/subtractFeature";
 import {divideFeature} from "./features/divideFeature";
 import {implicitMultiplyFeature} from "./features/implicitMultiplyFeature";
+import {EvaluationContext} from "./parser/AST/EvaluationContext";
+import {unitConfigContextIdentifier} from "./features/variables/unitConfigContextIdentifier";
+import {varBaseFeature} from "./features/variables/varBaseFeature";
+import {unitBaseFeature} from "./features/variables/unitBaseFeature";
+import {unitConversionFeature} from "./features/unitConversionFeature";
+import {unarySubtractFeature} from "./features/unarySubtractFeature";
+import {unaryAddFeature} from "./features/unaryAddFeature";
+import {moduloFeature} from "./features/moduloFeature";
+import {powerFeature} from "./features/powerFeature";
+import {factorialFeature} from "./features/factorialFunction";
 
 const parser = new Parser({
     features: [
         groupRecoveryFeature,
-        prefixFeature,
         addFeature,
         subtractFeature,
         multiplyFeature,
         divideFeature,
         implicitMultiplyFeature,
+        unitConversionFeature,
+        unarySubtractFeature,
+        unaryAddFeature,
+        moduloFeature,
+        powerFeature,
+        factorialFeature,
     ],
     baseFeatures: [
         numberBaseFeature,
         functionBaseFeature,
         groupRecoveryBaseFeature,
         unitOrVarBaseFeature,
+        varBaseFeature,
+        unitBaseFeature,
     ],
 });
-const input = "5min / 20(km*km)";
-// const input = "(5joule * 3kilogram)";
+// const input = "5min / 20(km*km)";
+const input = "(0meter)!";
 const result = parser.parse(input);
 if ("errors" in result) {
     console.log(...result.errors.map(({multilineMessage}) => multilineMessage));
@@ -58,7 +75,10 @@ if ("errors" in result) {
     }
 
     console.time("eval");
-    const evalResult = parser.evaluate(input);
+    const evalResult = parser.evaluate(
+        input,
+        new EvaluationContext().augment(unitConfigContextIdentifier, {customUnits: true})
+    );
     console.timeEnd("eval");
     if (isError(evalResult)) {
         evalResult.errors.forEach(error => console.log(error.multilineMessage));

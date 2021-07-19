@@ -2,7 +2,7 @@ import {createEvaluationContextIdentifier} from "../../../parser/AST/createEvalu
 import {IPureUnit} from "../../../_types/evaluation/number/IPureUnit";
 import {allUnits} from "./units/all";
 
-/** A context to store all */
+/** A context to store all units */
 export const unitContextIdentifier = createEvaluationContextIdentifier(
     "units",
     () => new UnitContext(allUnits)

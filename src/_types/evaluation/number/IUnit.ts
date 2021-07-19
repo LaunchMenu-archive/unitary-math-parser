@@ -51,4 +51,13 @@ export type IUnit = IUnitFormat & {
      * @returns The newly created unit
      */
     createNew(unit: IUnitFormat, config?: IUnitConfig): IUnit;
+
+    // Util
+    /**
+     * Checks whether two units are equivalent
+     * @param unit The unit to compare to
+     * @param weak Whether to check if no conversion is needed, or to check if units are really expressed in the same way (no equivalent units used, or factors rearranged), defaults to false
+     * @returns Whether the units are equivalent
+     */
+    equals(unit: IUnit, weak?: boolean): boolean;
 };

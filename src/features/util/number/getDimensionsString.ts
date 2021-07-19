@@ -25,13 +25,16 @@ export function getDimensionsString(dimensions: IUnitDimensions): string {
             )
             .join("*");
 
-    const divisor = getDimensionString(dimensions.denominator);
+    if (dimensions.numerator.length == 0 && dimensions.denominator.length == 0) return "";
+
+    const numerator = getDimensionString(dimensions.numerator);
+    const denominator = getDimensionString(dimensions.denominator);
     return (
         (dimensions.numerator.length > 0
-            ? getDimensionString(dimensions.numerator)
+            ? "" + (dimensions.numerator.length > 1 ? `(${numerator})` : numerator)
             : "1") +
         (dimensions.denominator.length > 0
-            ? "/" + (dimensions.denominator.length > 1 ? `(${divisor})` : divisor)
+            ? "/" + (dimensions.denominator.length > 1 ? `(${denominator})` : denominator)
             : "")
     );
 }

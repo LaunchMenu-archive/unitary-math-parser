@@ -1,4 +1,4 @@
-import {ICSTNode} from "../../_types/CST/ICSTNode";
+import {ICST} from "../../_types/CST/ICST";
 
 export type IEvaluationErrorConfig<T extends object | unknown = unknown> = {
     /** The error type name */
@@ -8,7 +8,7 @@ export type IEvaluationErrorConfig<T extends object | unknown = unknown> = {
     /** Retrieves the multiline message given a string that points at the syntax area */
     multilineMessage: (pointer: string) => string;
     /** The range that the error occured at */
-    source: ICSTNode;
+    source: ICST;
     /** Additional optional data */
     extra?: T;
 };

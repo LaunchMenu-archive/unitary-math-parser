@@ -6,7 +6,7 @@ export const [weight, gram] = createDimension({
     priority: 0,
     unit: {
         name: "gram",
-        alias: ["g"],
+        alias: ["g", "grams"],
     },
 });
 

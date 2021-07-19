@@ -10,7 +10,7 @@ export const [power, joule] = createDimension({
     priority: 4,
     unit: {
         name: "joule",
-        alias: ["j"],
+        alias: ["j", "joules"],
         equivalent: new Unit([kilogram, meter, meter], [second, second]),
     },
 });

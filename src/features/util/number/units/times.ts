@@ -7,27 +7,27 @@ export const [time, second] = createDimension({
     priority: 1,
     unit: {
         name: "second",
-        alias: ["s"],
+        alias: ["s", "seconds"],
     },
 });
 
 // https://en.wikipedia.org/wiki/Unit_of_time
 const minuteToMonth = createFactoredUnits(second, [
-    {name: "minute", alias: ["min"], factor: 60},
-    {name: "hour", alias: ["h"], factor: 60},
-    {name: "day", alias: ["d"], factor: 24},
-    {name: "week", factor: 7},
-    {name: "month", factor: 30},
+    {name: "minute", alias: ["min", "minutes"], factor: 60},
+    {name: "hour", alias: ["h", "hours"], factor: 60},
+    {name: "day", alias: ["d", "days"], factor: 24},
+    {name: "week", alias: ["weeks"], factor: 7},
+    {name: "month", alias: ["months"], factor: 30},
 ]);
 export const [minute, hour, day, week, month] = minuteToMonth;
 
 const yearToAeon = createFactoredUnits(day, [
-    {name: "year", alias: ["yr"], factor: 365},
-    {name: "decade", factor: 10},
-    {name: "century", factor: 10},
-    {name: "millenium", factor: 10},
-    {name: "Megannum", factor: 1e3},
-    {name: "aeon", factor: 1e3},
+    {name: "year", alias: ["yr", "years"], factor: 365},
+    {name: "decade", alias: ["decades"], factor: 10},
+    {name: "century", alias: ["centuries"], factor: 10},
+    {name: "millenium", alias: ["milleniums"], factor: 10},
+    {name: "Megannum", alias: ["Megannums"], factor: 1e3},
+    {name: "aeon", alias: ["aeons"], factor: 1e3},
 ]);
 export const [year, decade, century, millennium, Megannum, aeon] = yearToAeon;
 
@@ -46,16 +46,16 @@ export const [
 ] = smallerTimes;
 
 const secondVariants = createFactoredUnits(second, [
-    {name: "decasecond", alias: ["ds"], factor: 10},
-    {name: "hectosecond", alias: ["hs"], factor: 10},
-    {name: "kilosecond", alias: ["ks"], factor: 10},
+    {name: "decasecond", alias: ["ds", "decaseconds"], factor: 10},
+    {name: "hectosecond", alias: ["hs", "hectoseconds"], factor: 10},
+    {name: "kilosecond", alias: ["ks", "kiloseconds"], factor: 10},
 ]);
 export const [decasecond, hectosecond, kilosecond] = secondVariants;
 
 const minuteVariants = createFactoredUnits(second, [
-    {name: "decaminute", factor: 10},
-    {name: "hectominute", factor: 10},
-    {name: "kilominute", factor: 10},
+    {name: "decaminute", alias: ["decaminutes"], factor: 10},
+    {name: "hectominute", alias: ["hectominutes"], factor: 10},
+    {name: "kilominute", alias: ["kilominutes"], factor: 10},
 ]);
 export const [decaminute, hectominute, kilominute] = minuteVariants;
 

@@ -487,6 +487,39 @@ export class Unit implements IUnit {
     }
 
     // Util
+    /**
+     * Checks whether two units are equivalent
+     * @param unit The unit to compare to
+     * @param weak Whether to check if no conversion is needed, or to check if units are really expressed in the same way (no equivalent units used, or factors rearranged), defaults to false
+     * @returns Whether the units are equivalent
+     */
+    public equals(unit: IUnit, weak: boolean = false): boolean {
+        let thisUnit: IUnitFormat = this;
+        let otherUnit: IUnitFormat = unit;
+        if (weak) {
+            thisUnit = this.toBaseDimensions(thisUnit).unit;
+            otherUnit = this.toBaseDimensions(otherUnit).unit;
+            thisUnit = {
+                numerator: this.sortUnits(thisUnit.numerator),
+                denominator: this.sortUnits(thisUnit.denominator),
+            };
+            otherUnit = {
+                numerator: this.sortUnits(otherUnit.numerator),
+                denominator: this.sortUnits(otherUnit.denominator),
+            };
+        }
+
+        if (thisUnit.numerator.length != otherUnit.numerator.length) return false;
+        if (thisUnit.denominator.length != otherUnit.denominator.length) return false;
+        for (let i = 0; i < thisUnit.numerator.length; i++)
+            if (getUnit(thisUnit.numerator[i]) != getUnit(otherUnit.numerator[i]))
+                return false;
+        for (let i = 0; i < thisUnit.denominator.length; i++)
+            if (getUnit(thisUnit.denominator[i]) != getUnit(otherUnit.denominator[i]))
+                return false;
+        return true;
+    }
+
     /** @override */
     public toString(): string {
         const getUnitString = (units: (ILabeledPureUnit | IPureUnit)[]) =>
@@ -508,11 +541,15 @@ export class Unit implements IUnit {
                 )
                 .join("*");
 
-        const divisor = getUnitString(this.denominator);
+        if (this.numerator.length == 0 && this.denominator.length == 0) return "";
+        const denominator = getUnitString(this.denominator);
+        const numerator = getUnitString(this.numerator);
         return (
-            (this.numerator.length > 0 ? getUnitString(this.numerator) : "1") +
+            (this.numerator.length > 0
+                ? "" + (this.numerator.length > 1 ? `(${numerator})` : numerator)
+                : "1") +
             (this.denominator.length > 0
-                ? "/" + (this.denominator.length > 1 ? `(${divisor})` : divisor)
+                ? "/" + (this.denominator.length > 1 ? `(${denominator})` : denominator)
                 : "")
         );
     }

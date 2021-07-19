@@ -1,4 +1,3 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {IASTBase} from "../_types/AST/IASTBase";
@@ -6,6 +5,7 @@ import {ICSTNode} from "../_types/CST/ICSTNode";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {multiplyFeature} from "./multiplyFeature";
+import {addToken} from "./unaryAddFeature";
 import {checkDimensionMatch} from "./util/number/checkDimensionMatch";
 import {createNumber} from "./util/number/createNumber";
 import {isNumber} from "./util/number/isNumber";
@@ -13,7 +13,9 @@ import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
 
-export const addToken = createToken({name: "ADD", pattern: /\+/, label: '"+"'});
+/**
+ * The feature to take care of addition when encountering `+`
+ */
 export const addFeature = createFeature<{
     CST: IBinaryCSTData;
     AST: IBinaryASTData;

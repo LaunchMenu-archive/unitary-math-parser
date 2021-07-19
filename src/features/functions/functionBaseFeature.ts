@@ -1,12 +1,17 @@
 import {createToken} from "chevrotain";
-import {createBaseFeature} from "../createBaseFeature";
-import {createFeatureSupport} from "../createFeatureSupport";
-import {IASTExpression} from "../_types/AST/IASTExpression";
-import {IRecursive, IRP} from "../_types/AST/IRecursive";
-import {TGetASTType} from "../_types/AST/TGetASTType";
-import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
-import {leftBracketToken, rightBracketToken} from "./groupBaseFeature";
-import {textToken} from "./unitOrVarBaseFeature";
+import {createBaseFeature} from "../../createBaseFeature";
+import {createEvaluator} from "../../createEvaluator";
+import {createFeatureSupport} from "../../createFeatureSupport";
+import {EvaluationContext} from "../../parser/AST/EvaluationContext";
+import {IASTBase} from "../../_types/AST/IASTBase";
+import {IASTExpression} from "../../_types/AST/IASTExpression";
+import {IRecursive, IRP} from "../../_types/AST/IRecursive";
+import {TGetASTType} from "../../_types/AST/TGetASTType";
+import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
+import {ICSTNode} from "../../_types/CST/ICSTNode";
+import {leftBracketToken, rightBracketToken} from "../groupBaseFeature";
+import {textToken} from "../variables/varBaseFeature";
+import {functionContextIdentifier} from "./functionContextIdentifier";
 
 export const parameterSeparatorToken = createToken({
     name: "PARAMETER-SEPARATOR",
@@ -75,5 +80,28 @@ export const functionBaseFeature = createBaseFeature<{
         args: args.map(recurse),
         ...rest,
     }),
-    evaluate: [],
+    evaluate: [
+        createEvaluator(
+            {args: []},
+            (
+                {func, args, source}: {func: string; args: any[]} & IASTBase,
+                context: EvaluationContext
+            ) => {
+                const funcContext = context.get(functionContextIdentifier);
+                return funcContext.exec(
+                    func,
+                    args,
+                    {
+                        name: source.children[0],
+                        allArgs: source.children[2],
+                        args: (source.children[2] as ICSTNode).children.reduce(
+                            (args, child, i) => (i % 2 == 0 ? [...args, child] : args),
+                            [] as ICSTNode[]
+                        ),
+                    },
+                    context
+                );
+            }
+        ),
+    ],
 });

@@ -6,6 +6,7 @@ import {ICSTNode} from "../_types/CST/ICSTNode";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {addFeature} from "./addFeature";
+import {subtractToken} from "./unarySubtractFeature";
 import {checkDimensionMatch} from "./util/number/checkDimensionMatch";
 import {createNumber} from "./util/number/createNumber";
 import {isNumber} from "./util/number/isNumber";
@@ -13,7 +14,9 @@ import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
 
-export const subtractToken = createToken({name: "SUBTRACT", pattern: /\-/, label: '"-"'});
+/**
+ * The feature to take care of subtraction when encountering `-`
+ */
 export const subtractFeature = createFeature<{
     CST: IBinaryCSTData;
     AST: IBinaryASTData;

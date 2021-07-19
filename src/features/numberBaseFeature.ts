@@ -4,13 +4,17 @@ import {createEvaluator} from "../createEvaluator";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {createNumber} from "./util/number/createNumber";
-import {Unit} from "./util/number/Unit";
+import {unitLess} from "./util/number/units/unitLess";
 
 export const numberToken = createToken({
     name: "NUMBER",
     pattern: /(\d*\.)?\d+/,
     label: "number",
 });
+
+/**
+ * The feature to take care of reading numbers
+ */
 export const numberBaseFeature = createBaseFeature<{
     CST: [ICSTLeaf];
     AST: {value: IUnitaryNumber};
@@ -26,7 +30,7 @@ export const numberBaseFeature = createBaseFeature<{
         },
     },
     abstract: ({children: [child]}) => ({
-        value: createNumber(parseFloat(child.text), new Unit([], [])),
+        value: createNumber(parseFloat(child.text), unitLess),
     }),
     recurse: node => node,
     evaluate: [createEvaluator({}, ({value}: {value: IUnitaryNumber}) => value)],

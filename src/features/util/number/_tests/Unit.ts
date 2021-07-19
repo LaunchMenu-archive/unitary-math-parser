@@ -247,60 +247,107 @@ describe("Unit", () => {
                 ).toBe(true);
             });
         });
-        describe("Unit.getDimensionMismatch", () => {
-            it("Should remove all shared units", () => {
-                const meterMeterKilometerDecameterPerSecondHour = new Unit(
-                    [meter, meter, kilometer, decameter],
-                    [second, hour]
+    });
+    describe("Unit.getDimensionMismatch", () => {
+        it("Should remove all shared units", () => {
+            const meterMeterKilometerDecameterPerSecondHour = new Unit(
+                [meter, meter, kilometer, decameter],
+                [second, hour]
+            );
+            const meterKilometerDecameterPerSecondHourHour = new Unit(
+                [meter, kilometer, decameter],
+                [second, hour, hour]
+            );
+            const {extra, missing} =
+                meterMeterKilometerDecameterPerSecondHour.getDimensionsDifferentFrom(
+                    meterKilometerDecameterPerSecondHourHour
                 );
-                const meterKilometerDecameterPerSecondHourHour = new Unit(
-                    [meter, kilometer, decameter],
-                    [second, hour, hour]
+            expect(extra).toEqual({numerator: [length], denominator: []});
+            expect(missing).toEqual({numerator: [], denominator: [time]});
+        });
+        it("Should remove all shared dimensions regardless of unit", () => {
+            const meterMeterKilometerDecameterPerSecondHour = new Unit(
+                [centimeter, centimeter, decimeter, hectometer],
+                [week, day]
+            );
+            const meterKilometerDecameterPerSecondHourHour = new Unit(
+                [meter, kilometer, decameter],
+                [second, hour, hour]
+            );
+            const {extra, missing} =
+                meterMeterKilometerDecameterPerSecondHour.getDimensionsDifferentFrom(
+                    meterKilometerDecameterPerSecondHourHour
                 );
-                const {extra, missing} =
-                    meterMeterKilometerDecameterPerSecondHour.getDimensionsDifferentFrom(
-                        meterKilometerDecameterPerSecondHourHour
-                    );
-                expect(extra).toEqual({numerator: [length], denominator: []});
-                expect(missing).toEqual({numerator: [], denominator: [time]});
-            });
-            it("Should remove all shared dimensions regardless of unit", () => {
-                const meterMeterKilometerDecameterPerSecondHour = new Unit(
-                    [centimeter, centimeter, decimeter, hectometer],
-                    [week, day]
-                );
-                const meterKilometerDecameterPerSecondHourHour = new Unit(
-                    [meter, kilometer, decameter],
-                    [second, hour, hour]
-                );
-                const {extra, missing} =
-                    meterMeterKilometerDecameterPerSecondHour.getDimensionsDifferentFrom(
-                        meterKilometerDecameterPerSecondHourHour
-                    );
-                expect(extra).toEqual({numerator: [length], denominator: []});
-                expect(missing).toEqual({numerator: [], denominator: [time]});
-            });
-            it("Should expand dimensions to attempt removal", () => {
-                const joulePerHour = new Unit([joule], [hour]);
-                const meterKilogramPerSecondSecondHour = new Unit(
-                    [meter, kilogram],
-                    [second, hour, hour, second]
-                );
-                const {extra, missing} = joulePerHour.getDimensionsDifferentFrom(
-                    meterKilogramPerSecondSecondHour
-                );
-                expect(extra).toEqual({numerator: [length], denominator: []});
-                expect(missing).toEqual({numerator: [], denominator: [time]});
-            });
-            it("Should condense dimensions afterwards if not removed", () => {
-                const joulePerHour = new Unit([joule, second], [hour]);
-                const meterKilogramPerSecondSecondHour = new Unit([hour], [kilogram]);
-                const {extra, missing} = joulePerHour.getDimensionsDifferentFrom(
-                    meterKilogramPerSecondSecondHour
-                );
-                expect(extra).toEqual({numerator: [power], denominator: [time]});
-                expect(missing).toEqual({numerator: [], denominator: [weight]});
-            });
+            expect(extra).toEqual({numerator: [length], denominator: []});
+            expect(missing).toEqual({numerator: [], denominator: [time]});
+        });
+        it("Should expand dimensions to attempt removal", () => {
+            const joulePerHour = new Unit([joule], [hour]);
+            const meterKilogramPerSecondSecondHour = new Unit(
+                [meter, kilogram],
+                [second, hour, hour, second]
+            );
+            const {extra, missing} = joulePerHour.getDimensionsDifferentFrom(
+                meterKilogramPerSecondSecondHour
+            );
+            expect(extra).toEqual({numerator: [length], denominator: []});
+            expect(missing).toEqual({numerator: [], denominator: [time]});
+        });
+        it("Should condense dimensions afterwards if not removed", () => {
+            const joulePerHour = new Unit([joule, second], [hour]);
+            const hourPerKilogram = new Unit([hour], [kilogram]);
+            const {extra, missing} =
+                joulePerHour.getDimensionsDifferentFrom(hourPerKilogram);
+            expect(extra).toEqual({numerator: [power], denominator: [time]});
+            expect(missing).toEqual({numerator: [], denominator: [weight]});
+        });
+    });
+    describe("Unit.equals()", () => {
+        it("Should by default check strict equivalence", () => {
+            const jouleMeterPerHour = new Unit([joule, meter], [hour]);
+
+            const jouleMeterPerHour2 = new Unit([joule, meter], [hour]);
+            expect(jouleMeterPerHour.equals(jouleMeterPerHour2)).toBe(true);
+
+            const hourPerKilogram = new Unit([hour], [kilogram]);
+            expect(jouleMeterPerHour.equals(hourPerKilogram)).toBe(false);
+
+            const meterJoulePerHour = new Unit([meter, joule], [hour]);
+            expect(jouleMeterPerHour.equals(meterJoulePerHour)).toBe(false);
+        });
+        it("Should ignore reorders with weak equivalence", () => {
+            const jouleMeterPerHour = new Unit([joule, meter], [hour]);
+
+            const jouleMeterPerHour2 = new Unit([joule, meter], [hour]);
+            expect(jouleMeterPerHour.equals(jouleMeterPerHour2, true)).toBe(true);
+
+            const hourPerKilogram = new Unit([hour], [kilogram]);
+            expect(jouleMeterPerHour.equals(hourPerKilogram, true)).toBe(false);
+
+            const meterJoulePerHour = new Unit([meter, joule], [hour]);
+            expect(jouleMeterPerHour.equals(meterJoulePerHour, true)).toBe(true);
+        });
+        it("Should consider equivalent units", () => {
+            const jouleMeterPerHour = new Unit([joule, meter], [hour]);
+
+            const meterCubedKilogramPerSecondSecondHour = new Unit(
+                [meter, meter, meter, kilogram],
+                [second, second, hour]
+            );
+            expect(
+                jouleMeterPerHour.equals(meterCubedKilogramPerSecondSecondHour, true)
+            ).toBe(true);
+            expect(
+                jouleMeterPerHour.equals(meterCubedKilogramPerSecondSecondHour, false)
+            ).toBe(false);
+
+            const meterKilogramPerSecondCubed = new Unit(
+                [meter, meter, meter, kilogram],
+                [second, second, second]
+            );
+            expect(jouleMeterPerHour.equals(meterKilogramPerSecondCubed, true)).toBe(
+                false
+            );
         });
     });
 });

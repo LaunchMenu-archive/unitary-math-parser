@@ -20,7 +20,6 @@ import {IAlternativeCSTValidation} from "./_types/CST/IAlternativeCSTValidation"
 import {createErrorObject} from "./parser/createErrorsObject";
 import {IErrorObject} from "./_types/IErrorObject";
 import {EvaluationContext} from "./parser/AST/EvaluationContext";
-import {IEvaluationErrorObject} from "./_types/evaluation/IEvaluationErrorObject";
 
 export class Parser<C extends IParserConfig> {
     protected config: C;

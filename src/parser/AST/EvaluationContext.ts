@@ -22,6 +22,20 @@ export class EvaluationContext {
     }
 
     /**
+     * Updates an entry in the current evaluation context
+     * @param identifier The identifier of the data to replace/add
+     * @param data The data to be added/replaced
+     * @returns This evaluation context
+     */
+    public update<T>(
+        identifier: IEvaluationContextIdentifier<T>,
+        data: T
+    ): EvaluationContext {
+        this.data = {...this.data, [identifier.id]: data};
+        return this;
+    }
+
+    /**
      * Retrieves the data for the given identifier that's stored in this context
      * @param identifier The identifier to get the data of
      * @returns The data that was found

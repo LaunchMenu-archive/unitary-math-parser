@@ -34,7 +34,7 @@ export function checkDimensionMatch(
         // TODO: improve error message
         return createEvaluationError(
             {
-                type: "incompatible units",
+                type: "incompatibleSumUnits",
                 message: i => `Incompatible unit found at index ${i}; ${changesString}`,
                 multilineMessage: pm =>
                     `Incompatible unit found:\n${pm}\n${changesString}`,

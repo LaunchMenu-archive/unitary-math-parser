@@ -6,11 +6,11 @@ import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {addFeature} from "./addFeature";
 import {multiplyFeature} from "./multiplyFeature";
 
-export const prefixToken = createToken({name: "PREFIX", pattern: /\$/, label: '"$"'});
+export const prefixToken = createToken({name: "PREFIX", pattern: /\&/, label: '"&"'});
 export const prefixAltToken = createToken({
     name: "PREFIXALT",
-    pattern: /\#/,
-    label: '"#"',
+    pattern: /\^/,
+    label: '"^"',
 });
 export const prefixAlt2Token = createToken({
     name: "PREFIXTALT2",
@@ -35,7 +35,7 @@ export const prefixFeature = createFeature<{
                     ALT: () => ({
                         ...createLeaf(parser.consume(0, prefixAlt2Token)),
                         type: prefixToken,
-                        text: "$",
+                        text: "&",
                         isRecovery: true,
                     }),
                 },
@@ -51,8 +51,8 @@ export const prefixFeature = createFeature<{
                 const leaf = node.children[0];
                 if (!leaf.isRecovery) return;
                 for (let [type, text] of [
-                    [prefixToken, "$"],
-                    [prefixAltToken, "#"],
+                    [prefixToken, "&"],
+                    [prefixAltToken, "^"],
                 ] as const) {
                     if (type != leaf.type)
                         yield {

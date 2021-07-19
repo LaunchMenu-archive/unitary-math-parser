@@ -14,6 +14,9 @@ export const rightBracketToken = createToken({
     label: '")"',
 });
 
+/**
+ * The feature to increase precedence by enclosing an expression by brackets ()
+ */
 export const groupBaseFeature = createBaseFeature<{
     CST: [ICSTLeaf, IASTExpression, ICSTLeaf];
     AST: IASTExpression;

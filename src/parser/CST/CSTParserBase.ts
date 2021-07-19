@@ -12,7 +12,6 @@ import {IFeaturePrecedenceTarget} from "../../_types/IFeatureParser";
 import {IFeatureSupport} from "../../_types/IFeatureSupport";
 import {IParserConfig} from "../../_types/IParserConfig";
 import {IUsedTokenTypes} from "../../_types/IUsedTokenTypes";
-import {ICST} from "../../_types/CST/ICST";
 import {IFeatureRuleData} from "../../_types/CST/IFeatureRuleData";
 import {getFeatureSupports} from "../getFeatureSupports";
 import {createCSTNodeCreator} from "./createCSTNodeCreator";
@@ -20,13 +19,12 @@ import {IRuleData} from "../../_types/CST/IRuleData";
 import {createCSTLeaf} from "./createCSTLeaf";
 import {ICSTParseInit} from "../../_types/CST/ICSTParseInit";
 import {ICSTDataIdentifier} from "../_types/ICSTDataIdentifier";
-import {ICSTParsingError, IParsingError} from "../../_types/errors/IParsingError";
+import {ICSTParsingError} from "../../_types/errors/IParsingError";
 import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
-import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
-import {isLeaf} from "./isLeaf";
 import {ICSTNode} from "../../_types/CST/ICSTNode";
 import {IErrorObject} from "../../_types/IErrorObject";
 import {createErrorObject} from "../createErrorsObject";
+import {getOptionString} from "../../features/util/getOptionString";
 
 let tokenTypes: TokenType[];
 export class CSTParserBase extends EmbeddedActionsParser {
@@ -237,12 +235,9 @@ export class CSTParserBase extends EmbeddedActionsParser {
      */
     protected getSuggestionsString(suggestions: TokenType[][]): string {
         const suggestionNames = suggestions.map(([s]) => s?.LABEL ?? s.name);
-        const firstSuggestions = suggestionNames.slice(0, suggestions.length - 2);
-        const lastSuggestionText = suggestionNames.splice(suggestions.length - 2);
-        return (
-            (suggestions.length > 1 ? "either " : "") +
-            [...firstSuggestions, lastSuggestionText.join(" or ")].join(", ")
-        );
+        return `${suggestions.length > 1 ? "either " : ""}${getOptionString(
+            suggestionNames
+        )}`;
     }
 
     // Parser generation code
@@ -667,6 +662,11 @@ export function resolveTokenTypes(config: IParserConfig): TokenType[] {
     tokens.forEach(type => {
         if ("before" in type) {
             const index = type.before ? result.indexOf(type.before) : result.length;
+            result.splice(index - 1, 0, type);
+        } else if ("LONGER_ALT" in type) {
+            const index = type.LONGER_ALT
+                ? result.indexOf(type.LONGER_ALT)
+                : result.length;
             result.splice(index - 1, 0, type);
         } else {
             result.push(type);

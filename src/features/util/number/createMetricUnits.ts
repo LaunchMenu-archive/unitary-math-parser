@@ -23,9 +23,13 @@ export function createSmallerMetricUnits(
     IPureUnit
 ] {
     function map({name, alias, factor}: IFactorUnitConfig): IFactorUnitConfig {
+        const fullName = name + base.identifier.name;
         return {
-            name: name + base.identifier.name,
-            alias: base.identifier.alias.map((a, i) => (alias?.[i] ?? "") + a),
+            name: fullName,
+            alias: [
+                ...base.identifier.alias.map((a, i) => (alias?.[i] ?? "") + a),
+                fullName + "s",
+            ],
             factor,
         };
     }
@@ -65,9 +69,13 @@ export function createBiggerMetricUnits(
     IPureUnit
 ] {
     function map({name, alias, factor}: IFactorUnitConfig): IFactorUnitConfig {
+        const fullName = name + base.identifier.name;
         return {
-            name: name + base.identifier.name,
-            alias: base.identifier.alias.map((a, i) => (alias?.[i] ?? "") + a),
+            name: fullName,
+            alias: [
+                ...base.identifier.alias.map((a, i) => (alias?.[i] ?? "") + a),
+                fullName + "s",
+            ],
             factor,
         };
     }

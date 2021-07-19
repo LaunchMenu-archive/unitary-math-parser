@@ -1,4 +1,3 @@
-import {ICST} from "../CST/ICST";
 import {ICSTNode} from "../CST/ICSTNode";
 
 export type IASTBase<N extends string = string, T = unknown> = {
