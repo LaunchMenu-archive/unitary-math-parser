@@ -1,9 +1,11 @@
 import {IToken} from "chevrotain";
 import {EvaluationContext} from "../parser/AST/EvaluationContext";
+import {IValue} from "../parser/dataTypes/_types/IValue";
 import {IASTResult} from "./AST/IASTResult";
 import {IAlternativeCSTValidation} from "./CST/IAlternativeCSTValidation";
 import {ICSTResult} from "./CST/ICSTResult";
 import {IUnknownCharacterError} from "./errors/IUnknownCharacterError";
+import {IErrorObject} from "./IErrorObject";
 import {IFeatureSyntax} from "./IFeatureSyntax";
 import {IParserConfig} from "./IParserConfig";
 
@@ -32,5 +34,5 @@ export type IParsingResult<C extends IParserConfig> = {
     ): Generator<Omit<IParsingResult<C>, "correctionAlternatives">>;
 
     /** Evaluates the expression */
-    evaluate(context?: EvaluationContext): object;
+    evaluate(context?: EvaluationContext): IErrorObject<any> | IValue;
 };

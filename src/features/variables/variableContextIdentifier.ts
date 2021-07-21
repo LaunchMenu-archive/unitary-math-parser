@@ -1,5 +1,5 @@
 import {createEvaluationContextIdentifier} from "../../parser/AST/createEvaluationContextIdentifier";
-import {IUnitaryNumber} from "../../_types/evaluation/number/IUnitaryNumber";
+import {INumber} from "../util/number/_types/INumber";
 import {defaultVariables} from "./defaultVariables";
 
 /** A context to store all variables */
@@ -9,13 +9,13 @@ export const variableContextIdentifier = createEvaluationContextIdentifier(
 );
 
 export class VariableContext {
-    protected variables: Record<string, IUnitaryNumber> = {};
+    protected variables: Record<string, INumber> = {};
 
     /**
      * Creates a new variable context
      * @param variables The initial variables
      */
-    public constructor(variables: Record<string, IUnitaryNumber> = {}) {
+    public constructor(variables: Record<string, INumber> = {}) {
         this.variables = variables;
     }
 
@@ -24,7 +24,7 @@ export class VariableContext {
      * @param name The name or alias to look for
      * @returns The variable if any could be found
      */
-    public get(name: string): IUnitaryNumber | undefined {
+    public get(name: string): INumber | undefined {
         return this.variables[name];
     }
 
@@ -32,7 +32,7 @@ export class VariableContext {
      * Retrieves all variables in the context
      * @returns All variables
      */
-    public getAll(): Readonly<Record<string, IUnitaryNumber>> {
+    public getAll(): Readonly<Record<string, INumber>> {
         return this.variables;
     }
 
@@ -41,7 +41,7 @@ export class VariableContext {
      * @param variables The variables to be added
      * @returns The newly created context
      */
-    public augment(variables: Record<string, IUnitaryNumber>): VariableContext {
+    public augment(variables: Record<string, INumber>): VariableContext {
         return new VariableContext({...this.variables, ...variables});
     }
 }

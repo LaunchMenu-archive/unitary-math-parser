@@ -3,10 +3,8 @@ import {ILabeledPureUnit} from "../../../_types/evaluation/number/ILabeledPureUn
 import {IPureUnit} from "../../../_types/evaluation/number/IPureUnit";
 import {ISimplifyConfig} from "../../../_types/evaluation/number/ISimplifyConfig";
 import {IUnit} from "../../../_types/evaluation/number/IUnit";
-import {IUnitaryNumber} from "../../../_types/evaluation/number/IUnitaryNumber";
 import {IUnitDimensions} from "../../../_types/evaluation/number/IUnitDimensions";
 import {IUnitFormat} from "../../../_types/evaluation/number/IUnitFormat";
-import {createNumber} from "./createNumber";
 import {IToBaseDimensionsOutput} from "./_types/IToBaseDimensionsOutput";
 import {IUnitConfig} from "./_types/IUnitConfig";
 
@@ -381,17 +379,18 @@ export class Unit implements IUnit {
 
     // Value manipulation
     /**
-     * Converts a given number and its unit to this unit, given it's compatible
+     * Converts a given number and its unit to this unit, assuming it's compatible
      * @param number The number to be converted
+     * @param unit The original unit of the value
      * @returns Either undefined if dimensions aren't compatible, or the number expressed in this unit if they are compatible
      */
-    public convert(number: IUnitaryNumber): IUnitaryNumber | undefined {
-        if (!number.unit.hasSameDimensions(this)) return;
+    public convert(number: number, unit: IUnit): number | undefined {
+        if (!unit.hasSameDimensions(this)) return;
 
         // Get the value expressed in the base units of the dimensions of this unit
-        const baseValue = this.valueToBase(number.value, number.unit);
+        const baseValue = this.valueToBase(number, unit);
         const newValue = this.baseToValue(baseValue, this);
-        return createNumber(newValue, this, number.isUnit);
+        return newValue;
     }
 
     /**

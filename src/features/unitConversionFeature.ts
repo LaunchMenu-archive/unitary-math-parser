@@ -6,13 +6,13 @@ import {EvaluationContext} from "../parser/AST/EvaluationContext";
 import {IASTBase} from "../_types/AST/IASTBase";
 import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IRecursive} from "../_types/AST/IRecursive";
-import {ICSTNode} from "../_types/CST/ICSTNode";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {addFeature} from "./addFeature";
 import {checkDimensionMatch} from "./util/number/checkDimensionMatch";
-import {isNumber} from "./util/number/isNumber";
+import {number} from "./util/number/number";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
+import {createUnitaryValue} from "./util/createUnitaryValue";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
 import {textToken} from "./variables/varBaseFeature";
 
@@ -56,39 +56,41 @@ export const unitConversionFeature = createFeature<{
     }),
     evaluate: [
         createEvaluator(
-            {value: isNumber, unit: isNumber},
+            {value: number, unit: number},
             (
-                {
-                    value,
-                    unit,
-                    source,
-                }: {value: IUnitaryNumber; unit: IUnitaryNumber} & IASTBase,
+                node: {value: INumber; unit: INumber} & IASTBase,
                 context: EvaluationContext
-            ): IUnitaryNumber | IEvaluationErrorObject => {
-                if (!unit.isUnit) {
-                    return createEvaluationError(
-                        {
-                            type: "expectedUnit",
-                            message: i =>
-                                `Received a value at index ${i} while only a unit was expected`,
-                            multilineMessage: pm =>
-                                `Received a value while only a unit was expected:\n${pm}`,
-                            source: source.children[2] as ICSTNode,
-                        },
-                        context
+            ): INumber | IEvaluationErrorObject =>
+                createUnitaryValue(node, [node.value, node.unit], ([value, unit]) => {
+                    const unitCST = node.source.children[2];
+                    console.log(unit);
+                    if (!unit.isPureUnit) {
+                        return createEvaluationError(
+                            {
+                                type: "expectedUnit",
+                                message: i =>
+                                    `Received a value at index ${i} while only a unit was expected`,
+                                multilineMessage: pm =>
+                                    `Received a value while only a unit was expected:\n${pm}`,
+                                source: unitCST,
+                            },
+                            context
+                        );
+                    }
+
+                    const error = checkDimensionMatch(
+                        value.unit,
+                        unit.unit,
+                        context,
+                        unitCST
                     );
-                }
+                    if (error) return error;
 
-                const error = checkDimensionMatch(
-                    value.unit,
-                    unit.unit,
-                    context,
-                    source.children[2] as ICSTNode
-                );
-                if (error) return error;
-
-                return unit.unit.convert(value)!;
-            }
+                    return {
+                        value: unit.unit.convert(value.value, value.unit)!,
+                        unit: unit.unit,
+                    };
+                })
         ),
     ],
 });

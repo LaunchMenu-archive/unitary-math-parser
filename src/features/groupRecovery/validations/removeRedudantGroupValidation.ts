@@ -25,6 +25,7 @@ export const removeRedundantGroupValidation: IValidateCSTNode<
             }
         }
 
+        if (childPrecedence == Infinity) return child;
         return parentPrecedence > childPrecedence;
     },
 };

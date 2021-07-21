@@ -3,16 +3,18 @@ import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {createEvaluationError} from "../parser/AST/createEvaluationError";
 import {EvaluationContext} from "../parser/AST/EvaluationContext";
+import {isError} from "../parser/isError";
 import {IASTBase} from "../_types/AST/IASTBase";
 import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {computePowerUnit, powerFeature} from "./powerFeature";
-import {createNumber} from "./util/number/createNumber";
-import {isNumber} from "./util/number/isNumber";
+import {createUnitaryValue} from "./util/createUnitaryValue";
+import {approximationAugmentation} from "./util/number/approximationAugmentation";
+import {number} from "./util/number/number";
 import {unitLess} from "./util/number/units/unitLess";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
 
 export const factorialToken = createToken({
@@ -50,42 +52,50 @@ export const factorialFeature = createFeature<{
     }),
     evaluate: [
         createEvaluator(
-            {value: isNumber},
+            {value: number},
             (
-                {
-                    value: {unit, value, isUnit},
-                    source,
-                }: {
-                    value: IUnitaryNumber;
-                } & IASTBase,
+                node: {value: INumber} & IASTBase,
                 context: EvaluationContext
-            ): IUnitaryNumber | IEvaluationErrorObject => {
-                // Just perform the power if no unit is present on the left
-                if (unit.hasSameDimensions(unitLess))
-                    return createNumber(factorial(value).result, unit, isUnit);
-
-                // Error if the value isn't allowed
+            ): INumber | IEvaluationErrorObject => {
                 const roundErrorThreshold = 1e-10;
-                if (Math.abs(value % 1) > roundErrorThreshold || value < 0) {
-                    const message =
-                        "Value must be non-negative and an integer when the value has a unit";
-                    return createEvaluationError(
-                        {
-                            type: "nonIntegerFactorial",
-                            message: i => `${message}. Found at index ${i}.`,
-                            multilineMessage: pm => `${message}.\n${pm}`,
-                            source: source.children[2],
-                        },
-                        context
-                    );
-                }
+                const isApprox = Math.abs(node.value.data % 1) > roundErrorThreshold;
 
-                // Check whether it's a proper full power or full root
-                return createNumber(
-                    factorial(Math.round(value)).result,
-                    computePowerUnit(unit, Math.round(value)),
-                    isUnit
-                );
+                const res = createUnitaryValue(node, [node.value], ([value]) => {
+                    // Just perform the power if no unit is present on the left
+                    if (value.unit.hasSameDimensions(unitLess))
+                        return {
+                            value: factorial(value.value).result,
+                            unit: value.unit,
+                        };
+
+                    // Error if the value isn't allowed
+                    if (
+                        Math.abs(value.value % 1) > roundErrorThreshold ||
+                        value.value < 0
+                    ) {
+                        const message =
+                            "Value must be non-negative and an integer when the value has a unit";
+                        return createEvaluationError(
+                            {
+                                type: "nonIntegerFactorial",
+                                message: i => `${message}. Found at index ${i}.`,
+                                multilineMessage: pm => `${message}.\n${pm}`,
+                                source: node.source.children[0],
+                            },
+                            context
+                        );
+                    }
+
+                    // Check whether it's a proper full power or full root
+                    return {
+                        value: factorial(Math.round(value.value)).result,
+                        unit: computePowerUnit(value.unit, Math.round(value.value)),
+                    };
+                });
+
+                if (isError(res)) return res;
+                if (isApprox) return res.augment(approximationAugmentation, true);
+                return res;
             }
         ),
     ],

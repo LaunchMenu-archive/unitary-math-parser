@@ -5,10 +5,10 @@ import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {implicitMultiplyFeature} from "./implicitMultiplyFeature";
 import {numberBaseFeature} from "./numberBaseFeature";
-import {isNumber} from "./util/number/isNumber";
+import {number} from "./util/number/number";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
 
 export const addToken = createToken({name: "ADD", pattern: /\+/, label: '"+"'});
@@ -42,9 +42,8 @@ export const unaryAddFeature = createFeature<{
     }),
     evaluate: [
         createEvaluator(
-            {value: isNumber},
-            ({value}: {value: IUnitaryNumber}): IUnitaryNumber | IEvaluationErrorObject =>
-                value
+            {value: number},
+            (node: {value: INumber}): INumber | IEvaluationErrorObject => node.value
         ),
     ],
 });

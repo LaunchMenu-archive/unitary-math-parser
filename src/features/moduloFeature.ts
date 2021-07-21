@@ -1,10 +1,10 @@
 import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
+import {IASTBase} from "../_types/AST/IASTBase";
 import {multiplyFeature} from "./multiplyFeature";
-import {createNumber} from "./util/number/createNumber";
-import {isNumber} from "./util/number/isNumber";
+import {number} from "./util/number/number";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
@@ -47,18 +47,20 @@ export const moduloFeature = createFeature<{
     }),
     evaluate: [
         createEvaluator(
-            {left: isNumber, right: isNumber},
-            ({
-                left,
-                right,
-            }: {
-                left: IUnitaryNumber;
-                right: IUnitaryNumber;
-            }): IUnitaryNumber =>
-                createNumber(
-                    ((left.value % right.value) + right.value) % right.value,
-                    left.unit,
-                    left.isUnit
+            {left: number, right: number},
+            (
+                node: {
+                    left: INumber;
+                    right: INumber;
+                } & IASTBase
+            ): INumber =>
+                number.create(
+                    ((node.left.data % node.right.data) + node.right.data) %
+                        node.right.data,
+                    {
+                        node,
+                        values: [node.left, node.right],
+                    }
                 )
         ),
     ],

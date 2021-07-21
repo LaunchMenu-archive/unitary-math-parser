@@ -11,16 +11,16 @@ import {IDimension} from "../_types/evaluation/number/IDimension";
 import {ILabeledPureUnit} from "../_types/evaluation/number/ILabeledPureUnit";
 import {IPureUnit} from "../_types/evaluation/number/IPureUnit";
 import {IUnit} from "../_types/evaluation/number/IUnit";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {IUnitFormat} from "../_types/evaluation/number/IUnitFormat";
 import {numberBaseFeature} from "./numberBaseFeature";
 import {createInvalidUnitError} from "./util/createInvalidUnitError";
-import {createNumber} from "./util/number/createNumber";
 import {getDimensionsString} from "./util/number/getDimensionsString";
-import {isNumber} from "./util/number/isNumber";
+import {number} from "./util/number/number";
 import {getUnit} from "./util/number/Unit";
 import {unitLess} from "./util/number/units/unitLess";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
+import {createUnitaryValue} from "./util/createUnitaryValue";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
 
@@ -60,79 +60,72 @@ export const powerFeature = createFeature<{
     }),
     evaluate: [
         createEvaluator(
-            {left: isNumber, right: isNumber},
+            {left: number, right: number},
             (
-                {
-                    left,
-                    right,
-                    source,
-                }: {
-                    left: IUnitaryNumber;
-                    right: IUnitaryNumber;
+                node: {
+                    left: INumber;
+                    right: INumber;
                 } & IASTBase,
                 context: EvaluationContext
-            ): IUnitaryNumber | IEvaluationErrorObject => {
-                // Make sure the right argument is unitless
-                if (!right.unit.hasSameDimensions(unitLess))
-                    return createInvalidUnitError({
-                        received: left.unit,
-                        options: [unitLess],
-                        context,
-                        source: source.children[2],
-                    });
+            ): INumber | IEvaluationErrorObject =>
+                createUnitaryValue(node, [node.left, node.right], ([left, right]) => {
+                    const rightSource = node.source.children[2];
+                    // Make sure the right argument is unitless
+                    if (!right.unit.hasSameDimensions(unitLess))
+                        return createInvalidUnitError({
+                            received: left.unit,
+                            options: [unitLess],
+                            context,
+                            source: rightSource,
+                        });
 
-                // Just perform the power if no unit is present on the left
-                if (left.unit.hasSameDimensions(unitLess))
-                    return createNumber(
-                        left.value ** right.value,
-                        left.unit,
-                        left.isUnit
-                    );
+                    // Just perform the power if no unit is present on the left
+                    if (left.unit.hasSameDimensions(unitLess))
+                        return {
+                            value: left.value ** right.value,
+                            unit: left.unit,
+                        };
 
-                // Check whether it's a proper full power or full root
-                const inverted = 1 / right.value;
-                const roundErrorThreshold = 1e-10;
-                if (
-                    Math.abs(right.value % 1) > roundErrorThreshold &&
-                    (Math.abs(inverted) < 1 ||
-                        Math.abs(inverted % 1) > roundErrorThreshold)
-                ) {
-                    const message =
-                        "No non-integer value is allowed as an exponent for a value with unit (except for properly defined roots)";
-                    return createEvaluationError(
-                        {
-                            type: "unitWithPower",
-                            message: i => `${message}. Found at index ${i}.`,
-                            multilineMessage: pm => `${message}.\n${pm}`,
-                            source: source.children[2],
-                        },
-                        context
-                    );
-                }
+                    // Check whether it's a proper full power or full root
+                    const inverted = 1 / right.value;
+                    const roundErrorThreshold = 1e-10;
+                    if (
+                        Math.abs(right.value % 1) > roundErrorThreshold &&
+                        (Math.abs(inverted) < 1 ||
+                            Math.abs(inverted % 1) > roundErrorThreshold)
+                    ) {
+                        const message =
+                            "No non-integer value is allowed as an exponent for a value with unit (except for properly defined roots)";
+                        return createEvaluationError(
+                            {
+                                type: "unitWithPower",
+                                message: i => `${message}. Found at index ${i}.`,
+                                multilineMessage: pm => `${message}.\n${pm}`,
+                                source: rightSource,
+                            },
+                            context
+                        );
+                    }
 
-                // Perform the operation
-                const isRoot = right.value < 1;
-                if (isRoot) {
-                    const degree = Math.round(inverted);
-                    const newUnit = computeRootUnit(
-                        left.unit,
-                        degree,
-                        source.children[0],
-                        context
-                    );
-                    if (isError(newUnit)) return newUnit;
+                    // Perform the operation
+                    const isRoot = right.value < 1;
+                    if (isRoot) {
+                        const degree = Math.round(inverted);
+                        const newUnit = computeRootUnit(
+                            left.unit,
+                            degree,
+                            rightSource,
+                            context
+                        );
+                        if (isError(newUnit)) return newUnit;
 
-                    const value = newUnit.conversion.convert(left)!;
-                    return createNumber(
-                        value.value ** right.value,
-                        newUnit.result,
-                        left.isUnit
-                    );
-                } else {
-                    const newUnit = computePowerUnit(left.unit, right.value);
-                    return createNumber(left.value ** right.value, newUnit, left.isUnit);
-                }
-            }
+                        const value = newUnit.conversion.convert(left.value, left.unit)!;
+                        return {value: value ** right.value, unit: newUnit.result};
+                    } else {
+                        const newUnit = computePowerUnit(left.unit, right.value);
+                        return {value: left.value ** right.value, unit: newUnit};
+                    }
+                })
         ),
     ],
 });

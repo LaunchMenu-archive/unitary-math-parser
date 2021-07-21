@@ -1,3 +1,4 @@
+import {IValue} from "../../parser/dataTypes/_types/IValue";
 import {IFunctionExecution} from "./_types/IFunctionExecution";
 
 /**
@@ -5,8 +6,8 @@ import {IFunctionExecution} from "./_types/IFunctionExecution";
  * @param config The configuration for the function
  * @returns The function execution
  */
-export function createFunctionExecution<T extends Array<object>>(
-    config: IFunctionExecution<T>
-): IFunctionExecution<T> {
+export function createFunctionExecution<T extends Array<IValue>, K>(
+    config: IFunctionExecution<T, K>
+): IFunctionExecution<T, K> {
     return config;
 }

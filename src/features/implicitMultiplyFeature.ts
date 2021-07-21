@@ -1,53 +1,55 @@
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {EvaluationContext} from "../parser/AST/EvaluationContext";
+import {IASTBase} from "../_types/AST/IASTBase";
 import {IASTExpression} from "../_types/AST/IASTExpression";
+import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {IUnit} from "../_types/evaluation/number/IUnit";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {numberBaseFeature} from "./numberBaseFeature";
-import {unarySubtractFeature} from "./unarySubtractFeature";
-import {createNumber} from "./util/number/createNumber";
-import {isNumber} from "./util/number/isNumber";
+import {createUnitaryValue} from "./util/createUnitaryValue";
+import {number} from "./util/number/number";
 import {unitLess} from "./util/number/units/unitLess";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {unitConfigContextIdentifier} from "./variables/unitConfigContextIdentifier";
 
 export const multiplyEvaluator = createEvaluator(
-    {left: isNumber, right: isNumber},
+    {left: number, right: number},
     (
-        {left, right}: {left: IUnitaryNumber; right: IUnitaryNumber},
+        node: {left: INumber; right: INumber} & IASTBase,
         context: EvaluationContext
-    ): IUnitaryNumber => {
-        const unitConfig = context.get(unitConfigContextIdentifier);
-        const isUnit = left.isUnit && right.isUnit;
+    ): INumber | IEvaluationErrorObject =>
+        createUnitaryValue(node, [node.left, node.right], ([left, right]) => {
+            const unitConfig = context.get(unitConfigContextIdentifier);
+            const isUnit = left.isPureUnit && right.isPureUnit;
 
-        const rawUnit = left.unit.createNew(
-            {
-                numerator: [...left.unit.numerator, ...right.unit.numerator],
-                denominator: [...left.unit.denominator, ...right.unit.denominator],
-            },
-            {sortUnits: !isUnit && unitConfig.sortUnits}
-        );
+            const rawUnit = left.unit.createNew(
+                {
+                    numerator: [...left.unit.numerator, ...right.unit.numerator],
+                    denominator: [...left.unit.denominator, ...right.unit.denominator],
+                },
+                {sortUnits: !isUnit && unitConfig.sortUnits}
+            );
 
-        // If the unit is dimensionless we want to just drop one, E.g. 50% * 50% = 25%, not 2500 %^2. Otherwise we just simplify the unit by canceling out some numerators and denominators if possible
-        let unit: IUnit;
-        if (!unitConfig.removeDimensionlessFactors) {
-            unit = rawUnit.simplify(unitConfig.simplification);
-        } else if (
-            right.unit.hasSameDimensions(unitLess) &&
-            !right.isUnit &&
-            !right.unit.equals(unitLess)
-        ) {
-            unit = left.unit;
-        } else if (left.unit.hasSameDimensions(unitLess) && !left.isUnit) {
-            unit = right.unit;
-        } else {
-            unit = rawUnit.simplify(unitConfig.simplification);
-        }
+            // If the unit is dimensionless we want to just drop one, E.g. 50% * 50% = 25%, not 2500 %^2. Otherwise we just simplify the unit by canceling out some numerators and denominators if possible
+            let unit: IUnit;
+            if (!unitConfig.removeDimensionlessFactors) {
+                unit = rawUnit.simplify(unitConfig.simplification);
+            } else if (
+                right.unit.hasSameDimensions(unitLess) &&
+                !right.isPureUnit &&
+                !right.unit.equals(unitLess)
+            ) {
+                unit = left.unit;
+            } else if (left.unit.hasSameDimensions(unitLess) && !left.isPureUnit) {
+                unit = right.unit;
+            } else {
+                unit = rawUnit.simplify(unitConfig.simplification);
+            }
 
-        return unit.convert(createNumber(left.value * right.value, rawUnit, isUnit))!;
-    }
+            return {value: unit.convert(left.value * right.value, rawUnit)!, unit};
+        })
 );
 
 /**

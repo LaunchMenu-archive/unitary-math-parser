@@ -1,5 +1,6 @@
 import {createEvaluationError} from "../../../parser/AST/createEvaluationError";
 import {EvaluationContext} from "../../../parser/AST/EvaluationContext";
+import {ICST} from "../../../_types/CST/ICST";
 import {ICSTNode} from "../../../_types/CST/ICSTNode";
 import {IEvaluationErrorObject} from "../../../_types/evaluation/IEvaluationErrorObject";
 import {IUnit} from "../../../_types/evaluation/number/IUnit";
@@ -17,7 +18,7 @@ export function checkDimensionMatch(
     unitA: IUnit,
     unitB: IUnit,
     context: EvaluationContext,
-    source: ICSTNode
+    source: ICST
 ): IEvaluationErrorObject | undefined {
     const compatible = unitA.hasSameDimensions(unitB);
     if (!compatible) {

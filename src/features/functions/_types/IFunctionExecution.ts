@@ -1,20 +1,26 @@
-import {ITypeValidator} from "../../../_types/evaluation/ITypeValidator";
+import {IDataType} from "../../../parser/dataTypes/_types/IDataType";
+import {IValue} from "../../../parser/dataTypes/_types/IValue";
+import {IASTBase} from "../../../_types/AST/IASTBase";
+import {IEvaluationErrorObject} from "../../../_types/evaluation/IEvaluationErrorObject";
 
 /**The execution for a given function */
-export type IFunctionExecution<T extends Array<object> = Array<object>> = {
+export type IFunctionExecution<T extends Array<IValue> = Array<IValue>, K = any> = {
     /** The name of the function */
     name: string;
     /** The type checks for this function execution */
     check: TMapArray<T>;
     /** Executes the function */
-    exec(...args: T): any;
+    exec(
+        args: T,
+        node: IASTBase
+    ): IEvaluationErrorObject | IValue<K> | {type: IDataType<K>; value: K};
 };
 
 export type IFunctionArgValidation<T extends Object> =
-    | ITypeValidator<T>
+    | IDataType<T>
     | {
           /** Checks whether the data type corresponds */
-          type: ITypeValidator<T>;
+          type: IDataType<T>;
           /** Performs an additional check on the value, returns a description of the expected value if the supplied value isn't allowed.
            * E.g. when expecting odd numbers:
            * ```ts
@@ -24,12 +30,14 @@ export type IFunctionArgValidation<T extends Object> =
           value?: (arg: T) => string | undefined;
       };
 
-type TMapArray<T extends Array<any>> = T extends [infer F, ...infer R]
-    ? [IFunctionArgValidation<F>, ...TMapArray<R>]
+type TMapArray<T extends Array<IValue>> = T extends [infer F, ...infer R]
+    ? R extends Array<IValue>
+        ? [F extends IValue<infer U> ? IFunctionArgValidation<U> : F, ...TMapArray<R>]
+        : TMapNonTupleArray<T>
     : TMapNonTupleArray<T>;
 
-type TMapNonTupleArray<T extends Array<any>> = T extends []
+type TMapNonTupleArray<T extends Array<IValue>> = T extends []
     ? T
-    : T extends Array<infer U>
+    : T extends Array<IValue<infer U>>
     ? Array<IFunctionArgValidation<U>>
     : T;

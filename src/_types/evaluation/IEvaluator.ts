@@ -1,18 +1,22 @@
 import {EvaluationContext} from "../../parser/AST/EvaluationContext";
-import {ITypeValidator} from "./ITypeValidator";
+import {IDataType} from "../../parser/dataTypes/_types/IDataType";
+import {IValue} from "../../parser/dataTypes/_types/IValue";
+import {IEvaluationErrorObject} from "./IEvaluationErrorObject";
 
 /** An evaluator that and the sub-expression type validators*/
 export type IEvaluator<T extends Object = any, V extends TRecursiveValidator<T> = any> = {
     /** The validator data */
     validate: V;
     /** The evaluation function */
-    evaluate: (node: T, context: EvaluationContext) => any;
+    evaluate: (node: T, context: EvaluationContext) => IEvaluationErrorObject | IValue;
 };
 
 export type TRecursiveValidator<T> = T extends Array<any>
     ? TMapValidatorArray<T>
+    : T extends IValue<infer U>
+    ? IDataType<U>
     : T extends object
-    ? TMapValidatorObject<T> | ITypeValidator<T>
+    ? TMapValidatorObject<T>
     : never;
 
 export type TMapValidatorArray<T extends Array<any>> = T extends [infer F, ...infer R]

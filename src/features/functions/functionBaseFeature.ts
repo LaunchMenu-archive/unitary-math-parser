@@ -84,9 +84,10 @@ export const functionBaseFeature = createBaseFeature<{
         createEvaluator(
             {args: []},
             (
-                {func, args, source}: {func: string; args: any[]} & IASTBase,
+                node: {func: string; args: any[]} & IASTBase,
                 context: EvaluationContext
             ) => {
+                const {func, args, source} = node;
                 const funcContext = context.get(functionContextIdentifier);
                 return funcContext.exec(
                     func,
@@ -99,6 +100,7 @@ export const functionBaseFeature = createBaseFeature<{
                             [] as ICSTNode[]
                         ),
                     },
+                    node,
                     context
                 );
             }

@@ -68,10 +68,7 @@ export const groupRecoveryFeature = createFeature<{
         },
         correctionSuggestions: {
             getTrees: (tree, validate) => obtainAllPossibleGroupOptions(tree, validate),
-            defaultValidation: [
-                createSkipSameOperationValidation(["add", "multiply"]),
-                removeRedundantGroupValidation,
-            ],
+            defaultValidation: [removeRedundantGroupValidation],
             generationPerformsValidation: true,
         },
     },

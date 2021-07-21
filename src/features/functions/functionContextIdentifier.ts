@@ -1,8 +1,11 @@
 import {createEvaluationContextIdentifier} from "../../parser/AST/createEvaluationContextIdentifier";
 import {createEvaluationError} from "../../parser/AST/createEvaluationError";
 import {EvaluationContext} from "../../parser/AST/EvaluationContext";
+import {IValue} from "../../parser/dataTypes/_types/IValue";
+import {isError} from "../../parser/isError";
+import {IASTBase} from "../../_types/AST/IASTBase";
 import {ICST} from "../../_types/CST/ICST";
-import {ICSTNode} from "../../_types/CST/ICSTNode";
+import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
 import {getOptionString} from "../util/getOptionString";
 import {defaultFunctions} from "./defaultFunctions";
 import {IFunctionExecution} from "./_types/IFunctionExecution";
@@ -63,16 +66,18 @@ export class FunctionContext {
      * Executes the function with the specified name
      * @param name The name of the function
      * @param args The arguments to passed
-     * @param source The sources for the func and args
+     * @param syntaxSource The sources for the func and args
+     * @param node The ASTNode that represents the call
      * @param context The evaluation context to use
      * @returns The function result or an error
      */
     public exec(
         name: string,
-        args: any[],
-        source: {name: ICST; allArgs: ICST; args: ICST[]},
+        args: IValue[],
+        syntaxSource: {name: ICST; allArgs: ICST; args: ICST[]},
+        node: IASTBase,
         context: EvaluationContext
-    ): any {
+    ): IEvaluationErrorObject | IValue {
         // Find the function definitions
         const funcs = this.functions[name];
         if (!funcs)
@@ -81,7 +86,7 @@ export class FunctionContext {
                     type: "unknownFunction",
                     message: i => `Unknown function found at index ${i}: "${name}"`,
                     multilineMessage: pm => `Unknown function "${name}" found:\n${pm}`,
-                    source: source.name,
+                    source: syntaxSource.name,
                     extra: {name},
                 },
                 context
@@ -92,15 +97,15 @@ export class FunctionContext {
             count: check.length,
             checks: args.slice(0, check.length).map((arg, i) => {
                 const c = check[i];
-                if (c instanceof Function)
-                    return {hasCorrectType: c(arg), type: c.typeName, error: undefined};
-                else if (c.type(arg))
+                if ("name" in c)
+                    return {hasCorrectType: arg.isA(c), type: c, error: undefined};
+                else if (arg.isA(c.type))
                     return {
                         hasCorrectType: true,
-                        type: c.type.typeName,
+                        type: c.type,
                         error: c.value?.(arg),
                     };
-                return {hasCorrectType: false, type: c.type.typeName, error: undefined};
+                return {hasCorrectType: false, type: c.type, error: undefined};
             }),
             exec,
         }));
@@ -120,7 +125,7 @@ export class FunctionContext {
                     const optionString = getOptionString(
                         iCorrectArgExecs.map(({checks}) => {
                             const check = checks[i];
-                            if (!check.hasCorrectType) return check.type;
+                            if (!check.hasCorrectType) return check.type.name;
                             if (check.error) return check.error;
                             return "";
                         })
@@ -136,7 +141,7 @@ export class FunctionContext {
                                 `Found expression of wrong data type at index ${i}. ${errorMessage}`,
                             multilineMessage: pm =>
                                 `Found expression of wrong data type:\n${pm}\n${errorMessage}`,
-                            source: source.args[i],
+                            source: syntaxSource.args[i],
                             extra: {index: i, options: iCorrectArgExecs},
                         },
                         context
@@ -163,13 +168,16 @@ export class FunctionContext {
                         `Incorrect argument count found at index ${i}, expected ${countArgumentsString} but received ${args.length}`,
                     multilineMessage: pm =>
                         `Incorrect argument count found, expected ${countArgumentsString} but received ${args.length}:\n${pm}`,
-                    source: source.allArgs,
+                    source: syntaxSource.allArgs,
                 },
                 context
             );
         }
 
         // Apply the valid function
-        return acceptedExecs[0].exec(...args);
+        const res = acceptedExecs[0].exec(args, node);
+        if (isError(res)) return res;
+        if ("value" in res) return res.type.create(res.value, {node, values: args});
+        return res;
     }
 }

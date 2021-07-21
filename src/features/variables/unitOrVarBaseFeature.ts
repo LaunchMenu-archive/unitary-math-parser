@@ -4,7 +4,7 @@ import {isError} from "../../parser/isError";
 import {IASTBase} from "../../_types/AST/IASTBase";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../../_types/evaluation/number/IUnitaryNumber";
+import {INumber} from "../util/number/_types/INumber";
 import {getUnitEvalFunc} from "./unitBaseFeature";
 import {getVariableEvalFunc, textToken} from "./varBaseFeature";
 
@@ -33,7 +33,7 @@ export const unitOrVarBaseFeature = createBaseFeature<{
             (
                 node: {text: string} & IASTBase,
                 context
-            ): IUnitaryNumber | IEvaluationErrorObject => {
+            ): INumber | IEvaluationErrorObject => {
                 const variable = getVariableEvalFunc(node, context);
                 if (isError(variable)) {
                     const unit = getUnitEvalFunc(node, context);

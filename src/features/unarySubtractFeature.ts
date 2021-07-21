@@ -1,15 +1,15 @@
 import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
+import {IASTBase} from "../_types/AST/IASTBase";
 import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {implicitMultiplyFeature} from "./implicitMultiplyFeature";
 import {numberBaseFeature} from "./numberBaseFeature";
-import {createNumber} from "./util/number/createNumber";
-import {isNumber} from "./util/number/isNumber";
+import {number} from "./util/number/number";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
 
 export const subtractToken = createToken({name: "SUBTRACT", pattern: /\-/, label: '"-"'});
@@ -43,13 +43,9 @@ export const unarySubtractFeature = createFeature<{
     }),
     evaluate: [
         createEvaluator(
-            {value: isNumber},
-            ({
-                value: {value, unit, isUnit},
-            }: {
-                value: IUnitaryNumber;
-            }): IUnitaryNumber | IEvaluationErrorObject =>
-                createNumber(-value, unit, isUnit)
+            {value: number},
+            (node: {value: INumber} & IASTBase): INumber | IEvaluationErrorObject =>
+                number.create(-node.value, {node, values: [node.value]})
         ),
     ],
 });

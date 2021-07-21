@@ -1,14 +1,13 @@
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {IASTBase} from "../_types/AST/IASTBase";
-import {ICSTNode} from "../_types/CST/ICSTNode";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
 import {multiplyFeature} from "./multiplyFeature";
 import {addToken} from "./unaryAddFeature";
+import {createUnitaryValue} from "./util/createUnitaryValue";
 import {checkDimensionMatch} from "./util/number/checkDimensionMatch";
-import {createNumber} from "./util/number/createNumber";
-import {isNumber} from "./util/number/isNumber";
+import {number} from "./util/number/number";
+import {INumber} from "./util/number/_types/INumber";
 import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
@@ -43,32 +42,28 @@ export const addFeature = createFeature<{
     }),
     evaluate: [
         createEvaluator(
-            {left: isNumber, right: isNumber},
+            {left: number, right: number},
             (
-                {
-                    left,
-                    right,
-                    source,
-                }: {
-                    left: IUnitaryNumber;
-                    right: IUnitaryNumber;
+                node: {
+                    left: INumber;
+                    right: INumber;
                 } & IASTBase,
                 context
-            ): IUnitaryNumber | IEvaluationErrorObject => {
-                const error = checkDimensionMatch(
-                    left.unit,
-                    right.unit,
-                    context,
-                    source.children[2] as ICSTNode
-                );
-                if (error) return error;
+            ): INumber | IEvaluationErrorObject =>
+                createUnitaryValue(node, [node.left, node.right], ([left, right]) => {
+                    const error = checkDimensionMatch(
+                        left.unit,
+                        right.unit,
+                        context,
+                        node.source.children[2]
+                    );
+                    if (error) return error;
 
-                return createNumber(
-                    left.value + left.unit.convert(right)!.value,
-                    left.unit,
-                    left.isUnit && right.isUnit
-                );
-            }
+                    return {
+                        value: left.value + left.unit.convert(right.value, right.unit)!,
+                        unit: left.unit,
+                    };
+                })
         ),
     ],
 });

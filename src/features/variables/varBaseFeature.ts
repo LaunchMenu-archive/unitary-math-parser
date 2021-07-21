@@ -7,12 +7,13 @@ import {IASTBase} from "../../_types/AST/IASTBase";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
 import {IUnitaryNumber} from "../../_types/evaluation/number/IUnitaryNumber";
+import {INumber} from "../util/number/_types/INumber";
 import {variableContextIdentifier} from "./variableContextIdentifier";
 
 export const getVariableEvalFunc = (
     {text, source}: {text: string} & IASTBase,
     context: EvaluationContext
-): IUnitaryNumber | IEvaluationErrorObject => {
+): INumber | IEvaluationErrorObject => {
     const variables = context.get(variableContextIdentifier);
     const foundVariable = variables.get(text);
     if (foundVariable) return foundVariable;

@@ -30,11 +30,12 @@ export type IUnit = IUnitFormat & {
 
     // Value manipulation
     /**
-     * Converts a given number and its unit to this unit, given it's compatible
+     * Converts a given number and its unit to this unit, assuming it's compatible
      * @param number The number to be converted
+     * @param unit The original unit of the value
      * @returns Either undefined if dimensions aren't compatible, or the number expressed in this unit if they are
      */
-    convert(number: IUnitaryNumber): IUnitaryNumber | undefined;
+    convert(number: number, unit: IUnit): number | undefined;
 
     // Unit manipulation
     /**

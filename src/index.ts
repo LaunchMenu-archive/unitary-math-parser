@@ -3,12 +3,10 @@ import {groupRecoveryFeature} from "./features/groupRecovery/groupRecoveryFeatur
 import {functionBaseFeature} from "./features/functions/functionBaseFeature";
 import {multiplyFeature} from "./features/multiplyFeature";
 import {numberBaseFeature} from "./features/numberBaseFeature";
-import {prefixFeature} from "./features/prefixTestFeature";
 import {Parser} from "./Parser";
 import {groupRecoveryBaseFeature} from "./features/groupRecovery/groupRecoveryBaseFeature";
 import {ICST} from "./_types/CST/ICST";
 import {isError} from "./parser/isError";
-import {isNumber} from "./features/util/number/isNumber";
 import {unitOrVarBaseFeature} from "./features/variables/unitOrVarBaseFeature";
 import {subtractFeature} from "./features/subtractFeature";
 import {divideFeature} from "./features/divideFeature";
@@ -23,6 +21,19 @@ import {unaryAddFeature} from "./features/unaryAddFeature";
 import {moduloFeature} from "./features/moduloFeature";
 import {powerFeature} from "./features/powerFeature";
 import {factorialFeature} from "./features/factorialFunction";
+import {number} from "./features/util/number/number";
+import {unitAugmentation} from "./features/util/number/unitAugmentation";
+import {approximationAugmentation} from "./features/util/number/approximationAugmentation";
+
+// Things that remain to be done:
+// TODO: Add more units and dimensions, E.g. american units, angles and temperatures
+// TODO: Add more functions, E.g. floor, ceil, max, min, sin, cos, log, root
+// TODO: Add value formats system
+// TODO: Create unit tests
+// TODO: Add date type
+// TODO: Add list type
+// TODO: Make a high level wrapper such that it's easy to use for the default case
+// TODO: Make the index export all relevant things
 
 const parser = new Parser({
     features: [
@@ -48,8 +59,8 @@ const parser = new Parser({
         unitBaseFeature,
     ],
 });
-// const input = "5min / 20(km*km)";
-const input = "(0meter)!";
+const input = "5.1!+2+6+12+34)/20";
+// const input = "(6meter)!";
 const result = parser.parse(input);
 if ("errors" in result) {
     console.log(...result.errors.map(({multilineMessage}) => multilineMessage));
@@ -82,9 +93,13 @@ if ("errors" in result) {
     console.timeEnd("eval");
     if (isError(evalResult)) {
         evalResult.errors.forEach(error => console.log(error.multilineMessage));
-    } else if (isNumber(evalResult)) {
+    } else if (evalResult.isA(number)) {
         console.log(input + " =");
-        console.log(evalResult.value, evalResult.unit + "");
+        console.log(
+            evalResult.data,
+            evalResult.getAugmentation(unitAugmentation).unit + "",
+            evalResult.getAugmentation(approximationAugmentation)
+        );
     }
 }
 

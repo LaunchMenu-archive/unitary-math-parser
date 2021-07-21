@@ -6,18 +6,19 @@ import {EvaluationContext} from "../../parser/AST/EvaluationContext";
 import {IASTBase} from "../../_types/AST/IASTBase";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../../_types/evaluation/number/IUnitaryNumber";
 import {createDimension} from "../util/number/createDimension";
-import {createNumber} from "../util/number/createNumber";
+import {number} from "../util/number/number";
 import {Unit} from "../util/number/Unit";
+import {unitAugmentation} from "../util/number/unitAugmentation";
 import {unitContextIdentifier} from "../util/number/unitContextIdentifier";
+import {INumber} from "../util/number/_types/INumber";
 import {unitConfigContextIdentifier} from "./unitConfigContextIdentifier";
 import {textToken} from "./varBaseFeature";
 
 export const getUnitEvalFunc = (
     {text, source}: {text: string} & IASTBase,
     context: EvaluationContext
-): IUnitaryNumber | IEvaluationErrorObject => {
+): INumber | IEvaluationErrorObject => {
     const unitConfig = context.get(unitConfigContextIdentifier);
 
     const unitContext = context.get(unitContextIdentifier);
@@ -29,7 +30,7 @@ export const getUnitEvalFunc = (
                     type: "unknownUnit",
                     message: i => `Unknown unit found at index ${i}: "${text}"`,
                     multilineMessage: pm => `Unknown unit "${text}" found:\n${pm}`,
-                    source,
+                    source: source,
                 },
                 context
             );
@@ -45,7 +46,10 @@ export const getUnitEvalFunc = (
         context.update(unitContextIdentifier, unitContext.augment(unit));
     }
 
-    return createNumber(1, new Unit([{unit, label: text}], []), true);
+    return number.create(1).augment(unitAugmentation, {
+        unit: new Unit([{unit, label: text}], []),
+        isPureUnit: true,
+    });
 };
 
 export const unitToken = createToken({

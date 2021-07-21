@@ -2,9 +2,7 @@ import {createToken} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
 import {createEvaluator} from "../createEvaluator";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
-import {IUnitaryNumber} from "../_types/evaluation/number/IUnitaryNumber";
-import {createNumber} from "./util/number/createNumber";
-import {unitLess} from "./util/number/units/unitLess";
+import {number} from "./util/number/number";
 
 export const numberToken = createToken({
     name: "NUMBER",
@@ -17,7 +15,7 @@ export const numberToken = createToken({
  */
 export const numberBaseFeature = createBaseFeature<{
     CST: [ICSTLeaf];
-    AST: {value: IUnitaryNumber};
+    AST: {value: number};
     name: "number";
 }>({
     name: "number",
@@ -30,8 +28,8 @@ export const numberBaseFeature = createBaseFeature<{
         },
     },
     abstract: ({children: [child]}) => ({
-        value: createNumber(parseFloat(child.text), unitLess),
+        value: parseFloat(child.text),
     }),
     recurse: node => node,
-    evaluate: [createEvaluator({}, ({value}: {value: IUnitaryNumber}) => value)],
+    evaluate: [createEvaluator({}, ({value}: {value: number}) => number.create(value))],
 });

@@ -1,12 +1,12 @@
 import {EvaluationContext} from "../parser/AST/EvaluationContext";
+import {IValue} from "../parser/dataTypes/_types/IValue";
 import {IASTBase} from "./AST/IASTBase";
 import {IASTExpression} from "./AST/IASTExpression";
-import {IRecursive} from "./AST/IRecursive";
 import {TGetPlainAST} from "./AST/TGetPlainAST";
 import {TGetReductionASTNode} from "./AST/TGetReductionASTNode";
 import {TIsRecursiveNode} from "./AST/TMakeASTRecursive";
+import {IEvaluationErrorObject} from "./evaluation/IEvaluationErrorObject";
 import {IEvaluator} from "./evaluation/IEvaluator";
-import {ITypeValidator} from "./evaluation/ITypeValidator";
 import {IFeatureSyntax} from "./IFeatureSyntax";
 
 /**
@@ -36,8 +36,11 @@ export type IExecutionFuncs<T extends IFeatureSyntax> = {
                **/
               (
                   tree: IASTBase<T["name"], T["AST"]>,
-                  recurse: (node: IASTBase, context: EvaluationContext) => Object
-              ): Object;
+                  recurse: (
+                      node: IASTBase,
+                      context: EvaluationContext
+                  ) => IEvaluationErrorObject | IValue
+              ): IEvaluationErrorObject | IValue;
           };
 };
 

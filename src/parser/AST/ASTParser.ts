@@ -18,6 +18,9 @@ import {IEvaluator} from "../../_types/evaluation/IEvaluator";
 import {ITypeMismatchEvaluationError} from "../../_types/evaluation/ITypeMismatchEvaluationError";
 import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
 import {inputTextContextIdentifier} from "./inputTextContextIdentifier";
+import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
+import {IValue} from "../dataTypes/_types/IValue";
+import {IDataType} from "../dataTypes/_types/IDataType";
 
 type IAbstractionFunc = {
     (tree: ICSTConversionNode, source: ICST): Omit<IASTBase, "type" | "source">;
@@ -109,7 +112,7 @@ export class ASTParser<C extends IParserConfig> {
         tree: TGetConfigOutputAST<C>,
         context: EvaluationContext,
         expression: string
-    ): Object {
+    ): IEvaluationErrorObject | IValue {
         return this.innerEvaluate(
             tree,
             context.augment(inputTextContextIdentifier, expression),
@@ -128,7 +131,7 @@ export class ASTParser<C extends IParserConfig> {
         tree: TGetConfigOutputAST<C>,
         context: EvaluationContext,
         expression: string
-    ): Object {
+    ): IEvaluationErrorObject | IValue {
         const feature = this.features.get(tree.type);
         if (!feature) throw Error(`Was unable to evaluate node of type "${tree.type}"`);
 
@@ -139,21 +142,23 @@ export class ASTParser<C extends IParserConfig> {
 
         // Recurse on all sub-expressions of the tree
         let errors: IEvaluationError[] = [];
-        let values: {value: any; node: IASTBase}[] = [];
+        let values: {value?: IValue; node: IASTBase}[] = [];
         const conversionNode = feature.recurse<any>(tree, n => {
             const value = this.innerEvaluate(n as any, context, expression);
-            if (isEvaluationError(value)) errors.push(...value.errors);
-            values.push({value, node: n});
+            if (isEvaluationError(value)) {
+                errors.push(...value.errors);
+                values.push({node: n});
+            } else values.push({value, node: n});
             return value;
         });
 
         // Find an applicable evaluation rule
         let foundEvaluator = false;
         type ICheckData = {
-            validator: ITypeValidator<any>;
+            type: IDataType<any>;
             passed: boolean;
             node: IASTBase;
-            value: any;
+            value?: IValue;
         };
         const evals = feature.evaluate.map(evaluator => {
             if (!evaluator) throw Error(`Incorrect evaluator passed to "${tree.type}"`);
@@ -165,12 +170,12 @@ export class ASTParser<C extends IParserConfig> {
             let allPassed = true;
             try {
                 let i = 0;
-                feature.recurse(evaluator.validate, ((validate: ITypeValidator<any>) => {
+                feature.recurse(evaluator.validate, ((type: IDataType<any>) => {
                     const data = values[i++];
-                    const passed = validate(data.value);
+                    const passed = data.value?.isA(type) ?? false;
                     if (!passed) allPassed = false;
                     results.push({
-                        validator: validate,
+                        type,
                         passed,
                         ...data,
                     });
@@ -208,14 +213,12 @@ export class ASTParser<C extends IParserConfig> {
             })
             .filter(options => options.matchCount >= mostMatched);
 
-        const expected = validateOptions.map(
-            ({results}) => results![mostMatched].validator
-        );
+        const expected = validateOptions.map(({results}) => results![mostMatched].type);
         const {node, value: found} = validateOptions[0].results![mostMatched];
 
         const expectedMessage = `Received: ${found}, but expected ${
             expected.length > 1 ? "one of: " : "a "
-        }${expected.map(e => e.typeName).join(", ")}`;
+        }${expected.map(e => e.name).join(", ")}`;
         return createEvaluationErrorObject<ITypeMismatchEvaluationError>([
             {
                 node,

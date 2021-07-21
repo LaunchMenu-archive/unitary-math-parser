@@ -20,6 +20,7 @@ import {IAlternativeCSTValidation} from "./_types/CST/IAlternativeCSTValidation"
 import {createErrorObject} from "./parser/createErrorsObject";
 import {IErrorObject} from "./_types/IErrorObject";
 import {EvaluationContext} from "./parser/AST/EvaluationContext";
+import {IValue} from "./parser/dataTypes/_types/IValue";
 
 export class Parser<C extends IParserConfig> {
     protected config: C;
@@ -54,7 +55,7 @@ export class Parser<C extends IParserConfig> {
     public evaluate(
         expression: string,
         context: EvaluationContext = new EvaluationContext()
-    ): object {
+    ): IErrorObject<any> | IValue {
         const result = this.parse(expression);
         if ("errors" in result) return result;
         return result.evaluate(context);
@@ -247,7 +248,7 @@ export class Parser<C extends IParserConfig> {
         tree: TGetConfigOutputAST<C>,
         expression: string,
         context: EvaluationContext = new EvaluationContext()
-    ): Object {
+    ): IErrorObject<any> | IValue {
         return this.astParser.evaluate(tree, context, expression);
     }
 }

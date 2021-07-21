@@ -1,5 +1,7 @@
 import {EvaluationContext} from "./parser/AST/EvaluationContext";
+import {IValue} from "./parser/dataTypes/_types/IValue";
 import {IASTBase} from "./_types/AST/IASTBase";
+import {IEvaluationErrorObject} from "./_types/evaluation/IEvaluationErrorObject";
 import {IEvaluator, TRecursiveValidator} from "./_types/evaluation/IEvaluator";
 
 /**
@@ -11,6 +13,9 @@ import {IEvaluator, TRecursiveValidator} from "./_types/evaluation/IEvaluator";
 export function createEvaluator<
     T extends Object & Partial<IASTBase>,
     V extends TRecursiveValidator<T>
->(validate: V, evaluate: (node: T, context: EvaluationContext) => any): IEvaluator<T, V> {
+>(
+    validate: V,
+    evaluate: (node: T, context: EvaluationContext) => IEvaluationErrorObject | IValue
+): IEvaluator<T, V> {
     return {validate, evaluate};
 }

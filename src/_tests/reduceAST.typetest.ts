@@ -4,8 +4,6 @@ import {addFeature} from "../features/addFeature";
 import {groupBaseFeature} from "../features/groupBaseFeature";
 import {multiplyFeature} from "../features/multiplyFeature";
 import {numberBaseFeature} from "../features/numberBaseFeature";
-import {createNumber} from "../features/util/number/createNumber";
-import {Unit} from "../features/util/number/Unit";
 import {Parser} from "../Parser";
 import {TGetASTBaseBody} from "../_types/AST/TGetASTBaseBody";
 import {ICST} from "../_types/CST/ICST";
@@ -26,15 +24,13 @@ const varFeature = createBaseFeature<{
             return finish();
         },
     },
-    abstract: ({children: [child]}) => ({
-        var: child.text,
-    }),
+    abstract: ({children: [child]}) => ({var: child.text}),
     recurse: node => node,
-    evaluate: node => node,
+    evaluate: [],
 });
 
 /** This function will never get executed, but it serves as a test to check whether all intellisense continues working */
-function reduceASTTypetest() {
+function reduceASTTypeTest() {
     const parserDif = new Parser({
         features: [addFeature, multiplyFeature],
         baseFeatures: [numberBaseFeature, groupBaseFeature, varFeature],
@@ -53,23 +49,14 @@ function reduceASTTypetest() {
             ({source, ...node}) => {
                 if (node.type == "number") {
                     return {
-                        dif: createNode(
-                            "number",
-                            {value: createNumber(0, new Unit([], []))},
-                            source
-                        ),
+                        dif: createNode("number", {value: 0}, source),
                         or: {...node, source},
                     };
                 } else if (node.type == "var") {
                     return {
                         dif: createNode(
                             "number",
-                            {
-                                value: createNumber(
-                                    node.var == target ? 1 : 0,
-                                    new Unit([], [])
-                                ),
-                            },
+                            {value: node.var == target ? 1 : 0},
                             source
                         ),
                         or: {...node, source},
@@ -119,59 +106,41 @@ function reduceASTTypetest() {
             if (node.type == "multiply") {
                 if (node.left.type == "number") {
                     //  0*exp = 0
-                    if (node.left.value.value == 0)
-                        return createNode(
-                            "number",
-                            {value: createNumber(0, new Unit([], []))},
-                            source
-                        );
+                    if (node.left.value == 0)
+                        return createNode("number", {value: 0}, source);
                     // 1*exp = exp
-                    if (node.left.value.value == 1) return node.right;
+                    if (node.left.value == 1) return node.right;
 
                     // [num]*[num] = [num*num]
                     if (node.right.type == "number")
                         return createNode(
                             "number",
-                            {
-                                value: createNumber(
-                                    node.left.value.value * node.right.value.value,
-                                    new Unit([], [])
-                                ),
-                            },
+                            {value: node.left.value * node.right.value},
                             source
                         );
                 }
                 if (node.right.type == "number") {
                     // exp*0 = 0
-                    if (node.right.value.value == 0)
-                        return createNode(
-                            "number",
-                            {value: createNumber(0, new Unit([], []))},
-                            source
-                        );
+                    if (node.right.value == 0)
+                        return createNode("number", {value: 0}, source);
                     // exp*1 = exp
-                    if (node.right.value.value == 1) return node.left;
+                    if (node.right.value == 1) return node.left;
                 }
             }
             if (node.type == "add") {
                 if (node.left.type == "number") {
                     // 0+exp = exp
-                    if (node.left.value.value == 0) return node.right;
+                    if (node.left.value == 0) return node.right;
                     // [num]+[num] = [num+num]
                     if (node.right.type == "number")
                         return createNode(
                             "number",
-                            {
-                                value: createNumber(
-                                    node.left.value.value + node.right.value.value,
-                                    new Unit([], [])
-                                ),
-                            },
+                            {value: node.left.value + node.right.value},
                             source
                         );
                 }
                 // exp+0 = exp
-                if (node.right.type == "number" && node.right.value.value == 0)
+                if (node.right.type == "number" && node.right.value == 0)
                     return node.left;
 
                 // All variants of ([num]*x)+x = (([num+1])*x)
@@ -191,16 +160,7 @@ function reduceASTTypetest() {
                         return createNode(
                             "multiply",
                             {
-                                left: createNode(
-                                    "number",
-                                    {
-                                        value: createNumber(
-                                            f1.value.value + 1,
-                                            new Unit([], [])
-                                        ),
-                                    },
-                                    source
-                                ),
+                                left: createNode("number", {value: f1.value + 1}, source),
                                 right: createNode("var", {var: t1.var}, t1.source),
                             },
                             source
@@ -225,11 +185,7 @@ function reduceASTTypetest() {
                                 left: createNode(
                                     "multiply",
                                     {
-                                        left: createNode(
-                                            "number",
-                                            {value: createNumber(2, new Unit([], []))},
-                                            source
-                                        ),
+                                        left: createNode("number", {value: 2}, source),
                                         right: createNode(
                                             "var",
                                             {var: ti1.var},
@@ -253,11 +209,7 @@ function reduceASTTypetest() {
                     return createNode(
                         "multiply",
                         {
-                            left: createNode(
-                                "number",
-                                {value: createNumber(2, new Unit([], []))},
-                                source
-                            ),
+                            left: createNode("number", {value: 2}, source),
                             right: createNode(
                                 "var",
                                 {var: node.left.var},

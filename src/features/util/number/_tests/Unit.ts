@@ -1,4 +1,3 @@
-import {createNumber} from "../createNumber";
 import {Unit} from "../Unit";
 import {
     decameter,
@@ -50,62 +49,54 @@ describe("Unit", () => {
         it("Should convert to a base type", () => {
             const km = new Unit([kilometer], []);
             const m = new Unit([meter], []);
-            const inMeters = m.convert(createNumber(5, km));
-            expect(inMeters?.unit).toBe(m);
-            expect(inMeters?.value).toBe(5e3);
+            const inMeters = m.convert(5, km);
+            expect(inMeters).toBe(5e3);
         });
         it("Should convert from a base type", () => {
             const km = new Unit([kilometer], []);
             const m = new Unit([meter], []);
-            const inKms = km.convert(createNumber(5, m));
-            expect(inKms?.unit).toBe(km);
-            expect(inKms?.value).toBe(5e-3);
+            const inKms = km.convert(5, m);
+            expect(inKms).toBe(5e-3);
         });
         it("Should convert between any two type", () => {
             const km = new Unit([kilometer], []);
             const dm = new Unit([decameter], []);
-            const inKms = km.convert(createNumber(5, dm));
-            expect(inKms?.unit).toBe(km);
-            expect(inKms?.value).toBe(5e-2);
+            const inKms = km.convert(5, dm);
+            expect(inKms).toBe(5e-2);
         });
         it("Should convert to complex base types", () => {
             const kmPerHour = new Unit([kilometer], [hour]);
             const mPerSecond = new Unit([meter], [second]);
-            const inMpS = mPerSecond.convert(createNumber(18, kmPerHour));
-            expect(inMpS?.unit).toBe(mPerSecond);
-            expect(inMpS?.value).toBe(5);
+            const inMpS = mPerSecond.convert(18, kmPerHour);
+            expect(inMpS).toBe(5);
         });
         it("Should convert from complex base types", () => {
             const mPerSecond = new Unit([meter], [second]);
             const kmPerHour = new Unit([kilometer], [hour]);
-            const inKMpH = kmPerHour.convert(createNumber(5, mPerSecond));
-            expect(inKMpH?.unit).toBe(kmPerHour);
-            expect(inKMpH?.value).toBe(18);
+            const inKMpH = kmPerHour.convert(5, mPerSecond);
+            expect(inKMpH).toBe(18);
         });
         it("Should convert between any two complex types", () => {
             const kmPerHour = new Unit([kilometer], [hour]);
             const mPerMillisecond = new Unit([meter], [millisecond]);
-            const inMpMS = mPerMillisecond.convert(createNumber(18, kmPerHour));
-            expect(inMpMS?.unit).toBe(mPerMillisecond);
-            expect(inMpMS?.value).toBeCloseTo(5e-3, 10);
+            const inMpMS = mPerMillisecond.convert(18, kmPerHour);
+            expect(inMpMS).toBeCloseTo(5e-3, 10);
         });
         it("Should convert properly between derived dimensions", () => {
             const joulePerSecond = new Unit([joule], [second]);
             const kilojoulePerMinute = new Unit([kilojoule], [minute]);
-            const inJpM = kilojoulePerMinute.convert(createNumber(24, joulePerSecond));
-            expect(inJpM?.unit).toBe(kilojoulePerMinute);
-            expect(inJpM?.value).toBe(1.44);
+            const inJpM = kilojoulePerMinute.convert(24, joulePerSecond);
+            expect(inJpM).toBe(1.44);
 
             const jouleSecondPerMeter = new Unit([joule, second], [meter]);
             const kgDmPerHour = new Unit([kilogram, decameter], [hour]);
-            const inKgDmSpH = kgDmPerHour.convert(createNumber(24, jouleSecondPerMeter));
-            expect(inKgDmSpH?.unit).toBe(kgDmPerHour);
-            expect(inKgDmSpH?.value).toBe(8640);
+            const inKgDmSpH = kgDmPerHour.convert(24, jouleSecondPerMeter);
+            expect(inKgDmSpH).toBe(8640);
         });
         it("Should return undefined for incompatible units", () => {
             const joulePerSecond = new Unit([joule], [second]);
             const kilojoulePerMinute = new Unit([kilojoule], [meter]);
-            const inJpM = kilojoulePerMinute.convert(createNumber(24, joulePerSecond));
+            const inJpM = kilojoulePerMinute.convert(24, joulePerSecond);
             expect(inJpM).toBe(undefined);
         });
     });
