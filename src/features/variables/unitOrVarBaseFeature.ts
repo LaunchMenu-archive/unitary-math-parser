@@ -4,9 +4,10 @@ import {isError} from "../../parser/isError";
 import {IASTBase} from "../../_types/AST/IASTBase";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
+import {textToken} from "../tokens";
 import {INumber} from "../util/number/_types/INumber";
 import {getUnitEvalFunc} from "./unitBaseFeature";
-import {getVariableEvalFunc, textToken} from "./varBaseFeature";
+import {getVariableEvalFunc} from "./varBaseFeature";
 
 /**
  * A feature to read variables or units

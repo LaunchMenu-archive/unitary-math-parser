@@ -1,7 +1,7 @@
 import {ICorrectionSuggestionConfig} from "./CST/ICorrectionSuggestionConfig";
 import {ICST} from "./CST/ICST";
 import {ICSTNode} from "./CST/ICSTNode";
-import {ICSTParseInit} from "./CST/ICSTParseInit";
+import {ICSTParseBase} from "./CST/ICSTParseInit";
 import {IFeatureRuleData} from "./CST/IFeatureRuleData";
 import {TGetCSTNode} from "./CST/TGetCSTNode";
 import {IBaseFeature} from "./IBaseFeature";
@@ -53,10 +53,6 @@ export type IFeatureParserPrefix<T extends IFeatureSyntax> = IFeatureParserBase<
 };
 
 export type IFeatureParserBase<T extends IFeatureSyntax> = {
-    /** The token types used by this feature */
-    tokens?: IUsedTokenTypes;
-    /** The supporting rules that are used by the rule */
-    supports?: T["supports"] extends any[] ? T["supports"] : [];
     /** Specifies the precedence relation to another feature */
     precedence:
         | {
@@ -69,9 +65,7 @@ export type IFeatureParserBase<T extends IFeatureSyntax> = {
               /** Specifies to try and match this feature after the one it has the same precedence to (in case there is overlap between the syntax they match) */
               matchAfter?: boolean;
           };
-    /** The functions to obtain suggestions for correcting any possibly found and corrected mistakes */
-    correctionSuggestions?: ICorrectionSuggestionConfig<TGetCSTNode<T["CST"]>>;
-} & ICSTParseInit;
+} & ICSTParseBase<T>;
 
 export type IFeaturePrecedenceTarget =
     | IFeature<IFeatureSyntax>

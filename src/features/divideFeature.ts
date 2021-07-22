@@ -1,18 +1,15 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {EvaluationContext} from "../parser/AST/EvaluationContext";
 import {IASTBase} from "../_types/AST/IASTBase";
 import {multiplyFeature} from "./multiplyFeature";
+import {divideToken, spaceToken} from "./tokens";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
 import {unitConfigContextIdentifier} from "./variables/unitConfigContextIdentifier";
-
-export const divideToken = createToken({name: "DIVIDE", pattern: /\//, label: '"/"'});
 /**
  * The feature to take care of division when encountering `/`
  */
@@ -66,7 +63,7 @@ export const divideFeature = createFeature<{
                                 ...right.unit.numerator,
                             ],
                         },
-                        {sortUnits: !isUnit && unitConfig.sortUnits}
+                        {sortUnits: !isUnit && unitConfig.sortUnits !== false}
                     );
                     const simplifiedUnit = unit.simplify(unitConfig.simplification);
                     return {

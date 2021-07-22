@@ -1,4 +1,3 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {IASTBase} from "../_types/AST/IASTBase";
@@ -6,13 +5,10 @@ import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {implicitMultiplyFeature} from "./implicitMultiplyFeature";
 import {numberBaseFeature} from "./numberBaseFeature";
+import {spaceToken, subtractToken} from "./tokens";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
-
-export const subtractToken = createToken({name: "SUBTRACT", pattern: /\-/, label: '"-"'});
 
 /**
  * The feature to take care of unary subtraction when encountering `-`
@@ -34,7 +30,13 @@ export const unarySubtractFeature = createFeature<{
             addChild(parser.subrule(2, currentRule));
             return finish();
         },
-        precedence: {lowerThan: [numberBaseFeature, implicitMultiplyFeature]},
+        precedence: {
+            lowerThan: [
+                numberBaseFeature,
+                // // Implicit multiplication has to have higher precedence or otherwise `4 - 4 = (4)(-4)`
+                // implicitMultiplyFeature,
+            ],
+        },
     },
     abstract: ({children: [op, value]}) => ({value}),
     recurse: ({value, ...rest}, recurse) => ({
@@ -45,7 +47,7 @@ export const unarySubtractFeature = createFeature<{
         createEvaluator(
             {value: number},
             (node: {value: INumber} & IASTBase): INumber | IEvaluationErrorObject =>
-                number.create(-node.value, {node, values: [node.value]})
+                number.create(-node.value.data, {node, values: [node.value]})
         ),
     ],
 });

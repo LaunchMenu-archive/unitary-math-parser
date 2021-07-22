@@ -1,4 +1,3 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {createEvaluationError} from "../parser/AST/createEvaluationError";
@@ -11,17 +10,9 @@ import {addFeature} from "./addFeature";
 import {checkDimensionMatch} from "./util/number/checkDimensionMatch";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
-import {textToken} from "./variables/varBaseFeature";
-
-export const unitConversionToken = createToken({
-    name: "IN",
-    pattern: /in/i,
-    label: '"in"',
-    longer_alt: textToken,
-});
+import {spaceToken, unitConversionToken} from "./tokens";
 
 /**
  * The feature to convert from one unit to another when encountering `in`
@@ -63,7 +54,6 @@ export const unitConversionFeature = createFeature<{
             ): INumber | IEvaluationErrorObject =>
                 createUnitaryValue(node, [node.value, node.unit], ([value, unit]) => {
                     const unitCST = node.source.children[2];
-                    console.log(unit);
                     if (!unit.isPureUnit) {
                         return createEvaluationError(
                             {

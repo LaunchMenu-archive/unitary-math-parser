@@ -34,7 +34,6 @@ export function validateTree(
                 if (!result) return undefined;
             } else {
                 if (!result) return undefined;
-                // console.log(path, result);
                 const newPath = reconstructTree(path, result);
                 tree = newPath[0];
             }

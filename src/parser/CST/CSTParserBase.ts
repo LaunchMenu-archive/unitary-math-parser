@@ -17,7 +17,7 @@ import {getFeatureSupports} from "../getFeatureSupports";
 import {createCSTNodeCreator} from "./createCSTNodeCreator";
 import {IRuleData} from "../../_types/CST/IRuleData";
 import {createCSTLeaf} from "./createCSTLeaf";
-import {ICSTParseInit} from "../../_types/CST/ICSTParseInit";
+import {ICSTParseBase} from "../../_types/CST/ICSTParseInit";
 import {ICSTDataIdentifier} from "../_types/ICSTDataIdentifier";
 import {ICSTParsingError} from "../../_types/errors/IParsingError";
 import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
@@ -30,7 +30,7 @@ let tokenTypes: TokenType[];
 export class CSTParserBase extends EmbeddedActionsParser {
     /** The configuration of the parser */
     protected config: IParserConfig;
-    protected inits: ICSTParseInit[];
+    protected inits: ICSTParseBase[];
 
     /** The rules for the different precedence levels */
     protected precedenceRules: {
@@ -127,18 +127,16 @@ export class CSTParserBase extends EmbeddedActionsParser {
         return this.errors
             .map<ICSTParsingError | undefined>(error => {
                 const type = error.message[0];
+                const isEOF = error.token.tokenType == EOF;
+                const found = isEOF ? "end of file" : `character "${error.token.image}"`;
                 if (type == "1") {
                     const suggestions = this.getMessageTokens(error.message.slice(2));
                     return {
                         type: "noViableAlt",
-                        message: `Found unexpected character "${
-                            error.token.image
-                        }" at index ${
+                        message: `Found unexpected ${found} at index ${
                             error.token.startOffset
                         }, but expected ${this.getSuggestionsString(suggestions)}`,
-                        multilineMessage: `Found unexpected character "${
-                            error.token.image
-                        }":\n${getSyntaxPointerMessage(
+                        multilineMessage: `Found unexpected ${found}:\n${getSyntaxPointerMessage(
                             input,
                             error.token.startOffset
                         )}\nExpected ${this.getSuggestionsString(suggestions)}`,
@@ -149,14 +147,10 @@ export class CSTParserBase extends EmbeddedActionsParser {
                     const suggestions = this.getMessageTokens(error.message.slice(2));
                     return {
                         type: "earlyExit",
-                        message: `Found unexpected character "${
-                            error.token.image
-                        }" at index ${
+                        message: `Found unexpected ${found} at index ${
                             error.token.startOffset
                         }, but expected ${this.getSuggestionsString(suggestions)}`,
-                        multilineMessage: `Found unexpected character "${
-                            error.token.image
-                        }":\n${getSyntaxPointerMessage(
+                        multilineMessage: `Found unexpected ${found}:\n${getSyntaxPointerMessage(
                             input,
                             error.token.startOffset
                         )}\nExpected ${this.getSuggestionsString(suggestions)}`,

@@ -1,7 +1,7 @@
 import {createBaseFeature} from "../../createBaseFeature";
 import {IASTExpression} from "../../_types/AST/IASTExpression";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
-import {leftBracketToken, rightBracketToken} from "../groupBaseFeature";
+import {leftBracketToken, rightBracketToken} from "../tokens";
 import {leftBracketRecoveryToken} from "./groupRecoveryFeature";
 
 export const groupRecoveryBaseFeature = createBaseFeature<{

@@ -6,11 +6,12 @@ import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {IUnit} from "../_types/evaluation/number/IUnit";
 import {numberBaseFeature} from "./numberBaseFeature";
+import {powerFeature} from "./powerFeature";
+import {addToken, spaceToken, subtractToken} from "./tokens";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {number} from "./util/number/number";
 import {unitLess} from "./util/number/units/unitLess";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {unitConfigContextIdentifier} from "./variables/unitConfigContextIdentifier";
 
@@ -29,12 +30,12 @@ export const multiplyEvaluator = createEvaluator(
                     numerator: [...left.unit.numerator, ...right.unit.numerator],
                     denominator: [...left.unit.denominator, ...right.unit.denominator],
                 },
-                {sortUnits: !isUnit && unitConfig.sortUnits}
+                {sortUnits: !isUnit && unitConfig.sortUnits !== false}
             );
 
             // If the unit is dimensionless we want to just drop one, E.g. 50% * 50% = 25%, not 2500 %^2. Otherwise we just simplify the unit by canceling out some numerators and denominators if possible
             let unit: IUnit;
-            if (!unitConfig.removeDimensionlessFactors) {
+            if (unitConfig.removeDimensionlessFactors == false) {
                 unit = rawUnit.simplify(unitConfig.simplification);
             } else if (
                 right.unit.hasSameDimensions(unitLess) &&
@@ -63,15 +64,16 @@ export const implicitMultiplyFeature = createFeature<{
     name: "implicitMultiply",
     parse: {
         tokens: [spaceToken],
-        type: "infix",
-        associativity: "left",
+        type: "suffix",
         exec(node, {nextRule, parser, createNode}) {
             const {addChild, finish} = createNode();
+            // Deal with unary subtract/addition features
+            if ([addToken, subtractToken].includes(parser.LA(1).tokenType)) return node;
             addChild(node);
             addChild(parser.subrule(2, nextRule));
             return finish();
         },
-        precedence: {lowerThan: [numberBaseFeature]},
+        precedence: {lowerThan: [numberBaseFeature, powerFeature]},
     },
     abstract: ({children: [left, right]}) => ({left, right}),
     recurse: ({left, right, ...rest}, recurse) => ({

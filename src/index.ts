@@ -26,7 +26,7 @@ import {unitAugmentation} from "./features/util/number/unitAugmentation";
 import {approximationAugmentation} from "./features/util/number/approximationAugmentation";
 
 // Things that remain to be done:
-// TODO: Add more units and dimensions, E.g. american units, angles and temperatures
+// TODO: Add more units and dimensions, E.g. american units, hz, angles and temperatures
 // TODO: Add more functions, E.g. floor, ceil, max, min, sin, cos, log, root
 // TODO: Add value formats system
 // TODO: Create unit tests
@@ -59,7 +59,7 @@ const parser = new Parser({
         unitBaseFeature,
     ],
 });
-const input = "5.1!+2+6+12+34)/20";
+const input = "4 meter second kg^-1";
 // const input = "(6meter)!";
 const result = parser.parse(input);
 if ("errors" in result) {

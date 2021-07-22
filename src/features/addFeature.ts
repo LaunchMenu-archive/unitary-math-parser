@@ -3,12 +3,11 @@ import {createFeature} from "../createFeature";
 import {IASTBase} from "../_types/AST/IASTBase";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {multiplyFeature} from "./multiplyFeature";
-import {addToken} from "./unaryAddFeature";
+import {addToken, spaceToken} from "./tokens";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {checkDimensionMatch} from "./util/number/checkDimensionMatch";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
 

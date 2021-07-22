@@ -1,18 +1,7 @@
-import {createToken} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
 import {IASTExpression} from "../_types/AST/IASTExpression";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
-
-export const leftBracketToken = createToken({
-    name: "LEFT-BRACKET",
-    pattern: /\(/,
-    label: '"("',
-});
-export const rightBracketToken = createToken({
-    name: "RIGHT-BRACKET",
-    pattern: /\)/,
-    label: '")"',
-});
+import {leftBracketToken, rightBracketToken} from "./tokens";
 
 /**
  * The feature to increase precedence by enclosing an expression by brackets ()

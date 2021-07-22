@@ -4,14 +4,13 @@ import {IASTBase} from "../_types/AST/IASTBase";
 import {ICSTNode} from "../_types/CST/ICSTNode";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {addFeature} from "./addFeature";
-import {subtractToken} from "./unarySubtractFeature";
 import {checkDimensionMatch} from "./util/number/checkDimensionMatch";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
+import {spaceToken, subtractToken} from "./tokens";
 
 /**
  * The feature to take care of subtraction when encountering `-`

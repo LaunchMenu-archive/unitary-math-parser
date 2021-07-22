@@ -9,8 +9,7 @@ import {IRecursive, IRP} from "../../_types/AST/IRecursive";
 import {TGetASTType} from "../../_types/AST/TGetASTType";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {ICSTNode} from "../../_types/CST/ICSTNode";
-import {leftBracketToken, rightBracketToken} from "../groupBaseFeature";
-import {textToken} from "../variables/varBaseFeature";
+import {leftBracketToken, rightBracketToken, textToken} from "../tokens";
 import {functionContextIdentifier} from "./functionContextIdentifier";
 
 export const parameterSeparatorToken = createToken({

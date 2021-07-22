@@ -1,4 +1,3 @@
-import {createToken} from "chevrotain";
 import {createBaseFeature} from "../../createBaseFeature";
 import {createEvaluator} from "../../createEvaluator";
 import {createEvaluationError} from "../../parser/AST/createEvaluationError";
@@ -6,7 +5,7 @@ import {EvaluationContext} from "../../parser/AST/EvaluationContext";
 import {IASTBase} from "../../_types/AST/IASTBase";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
-import {IUnitaryNumber} from "../../_types/evaluation/number/IUnitaryNumber";
+import {textToken, variableToken} from "../tokens";
 import {INumber} from "../util/number/_types/INumber";
 import {variableContextIdentifier} from "./variableContextIdentifier";
 
@@ -28,17 +27,6 @@ export const getVariableEvalFunc = (
         context
     );
 };
-
-export const textToken = createToken({
-    name: "TEXT",
-    pattern: /(\w|%)+/,
-    label: "text",
-});
-export const variableToken = createToken({
-    name: "VAR",
-    pattern: /\$/,
-    label: '"$"',
-});
 
 /**
  * A feature to read variables

@@ -1,4 +1,4 @@
-import {Unit} from "../Unit";
+import {Unit} from "../features/util/number/Unit";
 import {
     decameter,
     kilometer,
@@ -7,10 +7,18 @@ import {
     centimeter,
     decimeter,
     hectometer,
-} from "../units/lengths";
-import {joule, kilojoule, power} from "../units/power";
-import {day, hour, millisecond, minute, second, time, week} from "../units/times";
-import {kilogram, weight} from "../units/weight";
+} from "../features/util/number/units/lengths";
+import {joule, kilojoule, power} from "../features/util/number/units/power";
+import {
+    day,
+    hour,
+    millisecond,
+    minute,
+    second,
+    time,
+    week,
+} from "../features/util/number/units/times";
+import {kilogram, weight} from "../features/util/number/units/weight";
 
 describe("Unit", () => {
     describe("Unit.getDimensions()", () => {

@@ -25,7 +25,8 @@ export function getDimensionsString(dimensions: IUnitDimensions): string {
             )
             .join("*");
 
-    if (dimensions.numerator.length == 0 && dimensions.denominator.length == 0) return "";
+    if (dimensions.numerator.length == 0 && dimensions.denominator.length == 0)
+        return "unitless";
 
     const numerator = getDimensionString(dimensions.numerator);
     const denominator = getDimensionString(dimensions.denominator);

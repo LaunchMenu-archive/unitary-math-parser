@@ -30,7 +30,7 @@ export function checkDimensionMatch(
         const changesString =
             (hasMissing ? `Missing: ${missingString}` : "") +
             (hasMissing && hasExtra ? ", " : "") +
-            (hasExtra ? `Extra: ${extraString} ` : "");
+            (hasExtra ? `Extra: ${extraString}` : "");
 
         // TODO: improve error message
         return createEvaluationError(

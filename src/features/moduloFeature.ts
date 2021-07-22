@@ -1,21 +1,12 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {IASTBase} from "../_types/AST/IASTBase";
 import {multiplyFeature} from "./multiplyFeature";
+import {moduloToken, spaceToken} from "./tokens";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
-import {textToken} from "./variables/varBaseFeature";
-
-export const moduloToken = createToken({
-    name: "MOD",
-    pattern: /mod/,
-    label: "mod",
-    longer_alt: textToken,
-});
 
 /**
  * The feature to take care of module when encountering `mod`

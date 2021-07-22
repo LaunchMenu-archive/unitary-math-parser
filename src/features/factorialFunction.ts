@@ -1,4 +1,3 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {createEvaluationError} from "../parser/AST/createEvaluationError";
@@ -10,18 +9,12 @@ import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {computePowerUnit, powerFeature} from "./powerFeature";
+import {factorialToken, spaceToken} from "./tokens";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {approximationAugmentation} from "./util/number/approximationAugmentation";
 import {number} from "./util/number/number";
 import {unitLess} from "./util/number/units/unitLess";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
-
-export const factorialToken = createToken({
-    name: "FACTORIAL",
-    pattern: /\!/,
-    label: '"!"',
-});
 
 /**
  * The feature to take care of module when encountering `mod`
@@ -62,24 +55,23 @@ export const factorialFeature = createFeature<{
 
                 const res = createUnitaryValue(node, [node.value], ([value]) => {
                     // Just perform the power if no unit is present on the left
-                    if (value.unit.hasSameDimensions(unitLess))
+                    const isUnitLess = value.unit.hasSameDimensions(unitLess);
+                    if (isUnitLess && value.value > 0)
                         return {
                             value: factorial(value.value).result,
                             unit: value.unit,
                         };
 
                     // Error if the value isn't allowed
-                    if (
-                        Math.abs(value.value % 1) > roundErrorThreshold ||
-                        value.value < 0
-                    ) {
-                        const message =
-                            "Value must be non-negative and an integer when the value has a unit";
+                    if (value.value < 0 || value.value % 1 > roundErrorThreshold) {
+                        const message = isUnitLess
+                            ? "Value must be non-negative"
+                            : "Value must be non-negative and an integer when the value has a unit";
                         return createEvaluationError(
                             {
                                 type: "nonIntegerFactorial",
                                 message: i => `${message}. Found at index ${i}.`,
-                                multilineMessage: pm => `${message}.\n${pm}`,
+                                multilineMessage: pm => `${message}:\n${pm}`,
                                 source: node.source.children[0],
                             },
                             context

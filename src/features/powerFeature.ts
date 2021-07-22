@@ -1,4 +1,3 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {createEvaluationError} from "../parser/AST/createEvaluationError";
@@ -19,16 +18,11 @@ import {number} from "./util/number/number";
 import {getUnit} from "./util/number/Unit";
 import {unitLess} from "./util/number/units/unitLess";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
-
-export const powerToken = createToken({
-    name: "POWER",
-    pattern: /\^/,
-    label: '"^"',
-});
+import {unarySubtractFeature} from "./unarySubtractFeature";
+import {powerToken, spaceToken} from "./tokens";
 
 /**
  * The feature to take care of module when encountering `mod`
@@ -50,7 +44,7 @@ export const powerFeature = createFeature<{
             addChild(parser.subrule(2, nextRule));
             return finish();
         },
-        precedence: {lowerThan: [numberBaseFeature]},
+        precedence: {lowerThan: [numberBaseFeature, unarySubtractFeature]},
     },
     abstract: ({children: [left, op, right]}) => ({left, right}),
     recurse: ({left, right, ...rest}, recurse) => ({
@@ -70,10 +64,12 @@ export const powerFeature = createFeature<{
             ): INumber | IEvaluationErrorObject =>
                 createUnitaryValue(node, [node.left, node.right], ([left, right]) => {
                     const rightSource = node.source.children[2];
+                    const leftSource = node.source.children[0];
+
                     // Make sure the right argument is unitless
                     if (!right.unit.hasSameDimensions(unitLess))
                         return createInvalidUnitError({
-                            received: left.unit,
+                            received: right.unit,
                             options: [unitLess],
                             context,
                             source: rightSource,
@@ -90,9 +86,9 @@ export const powerFeature = createFeature<{
                     const inverted = 1 / right.value;
                     const roundErrorThreshold = 1e-10;
                     if (
-                        Math.abs(right.value % 1) > roundErrorThreshold &&
+                        Math.abs(right.value) % 1 > roundErrorThreshold &&
                         (Math.abs(inverted) < 1 ||
-                            Math.abs(inverted % 1) > roundErrorThreshold)
+                            Math.abs(inverted) % 1 > roundErrorThreshold)
                     ) {
                         const message =
                             "No non-integer value is allowed as an exponent for a value with unit (except for properly defined roots)";
@@ -108,13 +104,13 @@ export const powerFeature = createFeature<{
                     }
 
                     // Perform the operation
-                    const isRoot = right.value < 1;
+                    const isRoot = Math.abs(right.value) < 1;
                     if (isRoot) {
                         const degree = Math.round(inverted);
                         const newUnit = computeRootUnit(
                             left.unit,
                             degree,
-                            rightSource,
+                            leftSource,
                             context
                         );
                         if (isError(newUnit)) return newUnit;
@@ -141,12 +137,17 @@ export function computePowerUnit(unit: IUnit, degree: number): IUnit {
         numerator: [],
         denominator: [],
     };
-    for (let i = 0; i < degree; i++) {
+    for (let i = 0; i < Math.abs(degree); i++) {
         conversion = {
             numerator: [...conversion.numerator, ...unit.numerator],
             denominator: [...conversion.denominator, ...unit.denominator],
         };
     }
+    if (degree < 0)
+        conversion = {
+            numerator: conversion.denominator,
+            denominator: conversion.numerator,
+        };
     return unit.createNew(conversion);
 }
 
@@ -179,7 +180,7 @@ export function computeRootUnit(
             const unit = units.shift()!;
             result.push(unit);
             const dimension = getUnit(unit).dimension;
-            for (let i = 1; i < degree; i++) {
+            for (let i = 1; i < Math.abs(degree); i++) {
                 const index = units.findIndex(u => getUnit(u).dimension == dimension);
                 if (index == -1) missingDimensions.push(dimension);
                 else units.splice(index, 1);
@@ -216,8 +217,8 @@ export function computeRootUnit(
 
     // Create the result unit and the conversion unit
     const result = unit.createNew({
-        numerator: dividedNumerator.result,
-        denominator: dividedDenominator.result,
+        numerator: degree < 0 ? dividedDenominator.result : dividedNumerator.result,
+        denominator: degree < 0 ? dividedNumerator.result : dividedDenominator.result,
     });
     return {result, conversion: computePowerUnit(result, degree)};
 }

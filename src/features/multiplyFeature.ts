@@ -1,14 +1,11 @@
-import {createToken} from "chevrotain";
 import {createFeature} from "../createFeature";
 import {implicitMultiplyFeature, multiplyEvaluator} from "./implicitMultiplyFeature";
 import {numberBaseFeature} from "./numberBaseFeature";
 import {powerFeature} from "./powerFeature";
+import {multiplyToken, spaceToken} from "./tokens";
 import {unarySubtractFeature} from "./unarySubtractFeature";
-import {spaceToken} from "./util/spaceToken";
 import {IBinaryASTData} from "./util/_types/IBinaryASTData";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
-
-export const multiplyToken = createToken({name: "MULTIPLY", pattern: /\*/, label: '"*"'});
 
 /**
  * The feature to take care of multiplication when encountering `*`

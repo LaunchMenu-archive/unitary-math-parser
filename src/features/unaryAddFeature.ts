@@ -1,17 +1,13 @@
-import {createToken} from "chevrotain";
 import {createEvaluator} from "../createEvaluator";
 import {createFeature} from "../createFeature";
 import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {implicitMultiplyFeature} from "./implicitMultiplyFeature";
-import {numberBaseFeature} from "./numberBaseFeature";
+import {addToken, spaceToken} from "./tokens";
+import {unarySubtractFeature} from "./unarySubtractFeature";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
-import {spaceToken} from "./util/spaceToken";
-
-export const addToken = createToken({name: "ADD", pattern: /\+/, label: '"+"'});
 
 /**
  * The feature to take care of unary subtraction when encountering `-`
@@ -33,7 +29,7 @@ export const unaryAddFeature = createFeature<{
             addChild(parser.subrule(2, currentRule));
             return finish();
         },
-        precedence: {lowerThan: [numberBaseFeature, implicitMultiplyFeature]},
+        precedence: {sameAs: [unarySubtractFeature]},
     },
     abstract: ({children: [op, value]}) => ({value}),
     recurse: ({value, ...rest}, recurse) => ({

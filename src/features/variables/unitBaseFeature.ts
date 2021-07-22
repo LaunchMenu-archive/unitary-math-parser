@@ -1,4 +1,3 @@
-import {createToken} from "chevrotain";
 import {createBaseFeature} from "../../createBaseFeature";
 import {createEvaluator} from "../../createEvaluator";
 import {createEvaluationError} from "../../parser/AST/createEvaluationError";
@@ -6,6 +5,7 @@ import {EvaluationContext} from "../../parser/AST/EvaluationContext";
 import {IASTBase} from "../../_types/AST/IASTBase";
 import {ICSTLeaf} from "../../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../../_types/evaluation/IEvaluationErrorObject";
+import {textToken, unitToken} from "../tokens";
 import {createDimension} from "../util/number/createDimension";
 import {number} from "../util/number/number";
 import {Unit} from "../util/number/Unit";
@@ -13,7 +13,6 @@ import {unitAugmentation} from "../util/number/unitAugmentation";
 import {unitContextIdentifier} from "../util/number/unitContextIdentifier";
 import {INumber} from "../util/number/_types/INumber";
 import {unitConfigContextIdentifier} from "./unitConfigContextIdentifier";
-import {textToken} from "./varBaseFeature";
 
 export const getUnitEvalFunc = (
     {text, source}: {text: string} & IASTBase,
@@ -51,12 +50,6 @@ export const getUnitEvalFunc = (
         isPureUnit: true,
     });
 };
-
-export const unitToken = createToken({
-    name: "UNIT",
-    pattern: /#/,
-    label: '"#"',
-});
 
 /**
  * A feature to read units

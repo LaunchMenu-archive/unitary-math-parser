@@ -3,7 +3,7 @@ import {createFeature} from "../../createFeature";
 import {createCSTDataIdentifier} from "../../parser/CST/createCSTDataIdentifier";
 import {IASTExpression} from "../../_types/AST/IASTExpression";
 import {addFeature} from "../addFeature";
-import {leftBracketToken, rightBracketToken} from "../groupBaseFeature";
+import {leftBracketToken, rightBracketToken} from "../tokens";
 import {obtainAllPossibleGroupOptions} from "./obtainAllPossibleGroupOptions";
 import {createSkipSameOperationValidation} from "./validations/createSkipSameOperatorAssociationValidation";
 import {removeRedundantGroupValidation} from "./validations/removeRedudantGroupValidation";
@@ -68,7 +68,10 @@ export const groupRecoveryFeature = createFeature<{
         },
         correctionSuggestions: {
             getTrees: (tree, validate) => obtainAllPossibleGroupOptions(tree, validate),
-            defaultValidation: [removeRedundantGroupValidation],
+            defaultValidation: [
+                createSkipSameOperationValidation(["add", "multiply"]),
+                removeRedundantGroupValidation,
+            ],
             generationPerformsValidation: true,
         },
     },

@@ -25,7 +25,7 @@ export function createInvalidUnitError({
     );
     const errorMessage = `Received: ${getDimensionsString(
         received.getDimensions()
-    )}, but expected ${optionString[0].match(/[auioe]/) ? "an" : "a"} ${optionString}`;
+    )}, but expected ${optionString}`;
 
     return createEvaluationError(
         {

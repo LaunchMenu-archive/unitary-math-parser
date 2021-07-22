@@ -1,14 +1,8 @@
-import {createToken} from "chevrotain";
 import {createBaseFeature} from "../createBaseFeature";
 import {createEvaluator} from "../createEvaluator";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
+import {numberToken} from "./tokens";
 import {number} from "./util/number/number";
-
-export const numberToken = createToken({
-    name: "NUMBER",
-    pattern: /(\d*\.)?\d+/,
-    label: "number",
-});
 
 /**
  * The feature to take care of reading numbers
