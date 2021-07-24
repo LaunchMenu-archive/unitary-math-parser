@@ -1,5 +1,4 @@
 import {IParserConfig} from "../IParserConfig";
-import {IASTBase} from "./IASTBase";
 import {TGetConfigOutputAST} from "./TGetConfigOutputAST";
 import {TGetConfigReachableAST} from "./TGetConfigReachableFeatureSyntax";
 import {TGetReductionASTNode} from "./TGetReductionASTNode";

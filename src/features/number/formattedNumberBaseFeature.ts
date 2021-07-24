@@ -28,10 +28,10 @@ export const formattedNumberBaseFeature = createBaseFeature<{
     name: "formatted-number",
     parse: {
         tokens: [numberFormatToken, numberToken, textToken, formatToken],
-        exec({createNode, createLeaf, parser, nextRule}) {
+        exec({createNode, createLeaf, parser, currentRule}) {
             const {addChild, finish} = createNode();
             addChild(createLeaf(parser.consume(3, numberFormatToken)));
-            addChild(parser.subrule(0, nextRule));
+            addChild(parser.subrule(0, currentRule));
             return finish();
         },
     },

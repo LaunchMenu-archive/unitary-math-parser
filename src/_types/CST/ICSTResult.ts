@@ -29,4 +29,6 @@ export type ICSTResult = {
             (type: string, children: T[]): T;
         }
     ): T;
+    /** @override */
+    toString(): string;
 };

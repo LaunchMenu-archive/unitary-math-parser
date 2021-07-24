@@ -125,6 +125,7 @@ export class Parser<C extends IParserConfig> {
             cst: {
                 tree: CST,
                 reduce: (base, step) => this.reduceCST(base, step, CST),
+                toString: () => this.getCSTString(CST).text,
             },
             get containsCorrection() {
                 return containsCorrect();
@@ -212,6 +213,50 @@ export class Parser<C extends IParserConfig> {
         validations: IAlternativeCSTValidation<IFeatureSyntax>[] = []
     ): Generator<ICSTNode> {
         return this.cstParser.computeAlternatives(CST, validations);
+    }
+
+    /**
+     * Retrieves the string representation of a given CST
+     * @param CST The CST to get the string notation for
+     * @returns The string notation
+     */
+    public getCSTString(CST: ICST): {
+        text: string;
+        start: number | undefined;
+        end: number | undefined;
+    } {
+        if (isLeaf(CST))
+            return {
+                text: CST.text,
+                start: CST.isRecovery ? undefined : CST.range.start,
+                end: CST.isRecovery ? undefined : CST.range.end,
+            };
+
+        return CST.children.reduce(
+            ({text, start, end}, child) => {
+                const childData = this.getCSTString(child);
+                const skippedChars =
+                    end !== undefined &&
+                    childData.start != undefined &&
+                    childData.start - end > 0;
+                return {
+                    text: text + (skippedChars ? " " : "") + childData.text,
+                    start:
+                        start != undefined && childData.start != undefined
+                            ? Math.min(childData.start, start)
+                            : childData.start ?? start,
+                    end:
+                        end != undefined && childData.end != undefined
+                            ? Math.max(end, childData.end)
+                            : childData.end ?? end,
+                };
+            },
+            {
+                text: "",
+                start: undefined as undefined | number,
+                end: undefined as undefined | number,
+            }
+        );
     }
 
     /**

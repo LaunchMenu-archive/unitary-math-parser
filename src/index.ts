@@ -67,7 +67,7 @@ const parser = new Parser({
 
 // const input = "(41 as hexadecimal)meter second kg^-1";
 // const input = "10.4";
-const input = "(1011 as binary) m/s + (F1 as hexadecimal) km/h in base5";
+const input = "(1011 as binary) m/s + F1 as hexadecimal) km/h in base5";
 const result = parser.parse(input);
 if ("errors" in result) {
     console.log(...result.errors.map(({multilineMessage}) => multilineMessage));
@@ -87,7 +87,8 @@ if ("errors" in result) {
         console.log(`"${input}" could also have been:`);
         console.time("alternatives");
         for (let altResult of result.getCorrectionAlternatives()) {
-            console.log(toString(altResult.cst.tree));
+            debugger;
+            console.log(altResult.cst + "");
         }
         console.timeEnd("alternatives");
     }
