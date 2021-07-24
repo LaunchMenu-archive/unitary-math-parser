@@ -279,8 +279,8 @@ export class CSTParserBase extends EmbeddedActionsParser {
         });
         this.base = this.RULE("base", () =>
             this.OR<ICSTNode>(
-                baseRules.map((exec, i) => ({
-                    ALT: () => this.subrule(i, exec),
+                baseRules.map((rule, i) => ({
+                    ALT: () => this.subrule(i, rule),
                 }))
             )
         );
@@ -654,18 +654,35 @@ export function resolveTokenTypes(config: IParserConfig): TokenType[] {
     // Order the tokens
     const result: TokenType[] = [];
     tokens.forEach(type => {
-        if ("before" in type) {
-            const index = type.before ? result.indexOf(type.before) : result.length;
-            result.splice(index - 1, 0, type);
-        } else if ("LONGER_ALT" in type) {
-            const index = type.LONGER_ALT
-                ? result.indexOf(type.LONGER_ALT)
-                : result.length;
-            result.splice(index - 1, 0, type);
+        if (type == undefined) console.log("undefined");
+        if (result.some(t => t.PATTERN == type.PATTERN)) return;
+
+        if (type.before) {
+            if (type.before) {
+                const index = type.before
+                    .filter(t => tokens.includes(t))
+                    .map(t => result.indexOf(t))
+                    .reduce((cur, index) => Math.min(cur, index), Infinity);
+
+                if (index == -1) {
+                    // Add later when the parent has been added
+                    tokens.push(type);
+                } else if (Infinity > index) result.splice(index, 0, type);
+                else result.push(type);
+            }
+        } else if (type.LONGER_ALT) {
+            const index = result.findIndex(t => t.PATTERN == type.LONGER_ALT?.PATTERN);
+            if (index == -1) {
+                if (tokens.includes(type.LONGER_ALT)) {
+                    // Add later when the parent has been added
+                    tokens.push(type);
+                } else result.push(type);
+            } else result.splice(index, 0, type);
         } else {
             result.push(type);
         }
     });
+    // console.log(result);
     return result;
 }
 

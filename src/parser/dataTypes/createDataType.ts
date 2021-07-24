@@ -24,10 +24,16 @@ export function createDataType<V>(name: string): IDataType<V> {
             // Merge all default augmentation data
             const augmentationData: IAugmentationMap<V> = {};
             for (let augmentation of augmentations) {
-                const values = parent.values.map(value => ({
-                    augmentation: value.getAugmentation(augmentation),
-                    all: value,
-                }));
+                if (!augmentation.dataType.includes(dataType)) continue;
+
+                const values = parent.values
+                    .filter(value =>
+                        augmentation.dataType.some(({type}) => type == value.type)
+                    )
+                    .map(value => ({
+                        augmentation: value.getAugmentation(augmentation),
+                        all: value,
+                    }));
                 const augmentationResult = augmentation.merge(values, data, parent.node);
                 augmentationData[augmentation.identifier as any] = {
                     augmentation,
@@ -84,6 +90,7 @@ function createValue<V>(
                 sym => augmentations[sym as any].augmentation
             ),
         isA: <T>({type}: IDataType<T>) => type == dataType.type,
+        toString: () => dataType.name,
     };
     return item;
 }

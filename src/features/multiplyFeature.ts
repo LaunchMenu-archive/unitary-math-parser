@@ -1,6 +1,6 @@
 import {createFeature} from "../createFeature";
 import {implicitMultiplyFeature, multiplyEvaluator} from "./implicitMultiplyFeature";
-import {numberBaseFeature} from "./numberBaseFeature";
+import {numberBaseFeature} from "./number/numberBaseFeature";
 import {powerFeature} from "./powerFeature";
 import {multiplyToken, spaceToken} from "./tokens";
 import {unarySubtractFeature} from "./unarySubtractFeature";

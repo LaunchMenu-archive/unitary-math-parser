@@ -1,7 +1,7 @@
 import {addFeature} from "../features/addFeature";
 import {groupRecoveryFeature} from "../features/groupRecovery/groupRecoveryFeature";
 import {multiplyFeature} from "../features/multiplyFeature";
-import {numberBaseFeature} from "../features/numberBaseFeature";
+import {numberBaseFeature} from "../features/number/numberBaseFeature";
 import {Parser} from "../Parser";
 import {groupRecoveryBaseFeature} from "../features/groupRecovery/groupRecoveryBaseFeature";
 import {unarySubtractFeature} from "../features/unarySubtractFeature";
@@ -13,10 +13,14 @@ import {factorialFeature} from "../features/factorialFunction";
 import {powerFeature} from "../features/powerFeature";
 import {moduloFeature} from "../features/moduloFeature";
 import {unaryAddFeature} from "../features/unaryAddFeature";
-import {unitConversionFeature} from "../features/unitConversionFeature";
+import {conversionFeature} from "../features/conversionFeature";
 import {implicitMultiplyFeature} from "../features/implicitMultiplyFeature";
 import {divideFeature} from "../features/divideFeature";
 import {subtractFeature} from "../features/subtractFeature";
+import {formattedNumberBaseFeature} from "../features/number/formattedNumberBaseFeature";
+import {binaryNumberBaseFeature} from "../features/number/binaryNumberBaseFeature";
+import {hexadecimalNumberBaseFeature} from "../features/number/hexadecimalNumberBaseFeature";
+import {octalNumberBaseFeature} from "../features/number/octalNumberBaseFeature";
 
 export function getParser() {
     return new Parser({
@@ -27,7 +31,7 @@ export function getParser() {
             multiplyFeature,
             divideFeature,
             implicitMultiplyFeature,
-            unitConversionFeature,
+            conversionFeature,
             unarySubtractFeature,
             unaryAddFeature,
             moduloFeature,
@@ -35,12 +39,16 @@ export function getParser() {
             factorialFeature,
         ],
         baseFeatures: [
-            numberBaseFeature,
+            formattedNumberBaseFeature,
             functionBaseFeature,
             groupRecoveryBaseFeature,
             unitOrVarBaseFeature,
             varBaseFeature,
             unitBaseFeature,
+            numberBaseFeature,
+            binaryNumberBaseFeature,
+            hexadecimalNumberBaseFeature,
+            octalNumberBaseFeature,
         ],
     });
 }

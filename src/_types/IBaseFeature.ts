@@ -1,10 +1,7 @@
 import {IFeatureSyntax} from "./IFeatureSyntax";
-import {IUsedTokenTypes} from "./IUsedTokenTypes";
 import {IFeatureRuleData} from "./CST/IFeatureRuleData";
 import {ICSTParseBase} from "./CST/ICSTParseInit";
 import {IExecutionFuncs} from "./IExecutionFunc";
-import {TGetCSTNode} from "./CST/TGetCSTNode";
-import {ICorrectionSuggestionConfig} from "./CST/ICorrectionSuggestionConfig";
 import {ICSTNode} from "./CST/ICSTNode";
 import {IFeatureCore} from "./IFeatureCore";
 

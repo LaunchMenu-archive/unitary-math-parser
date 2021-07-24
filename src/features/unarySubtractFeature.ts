@@ -5,7 +5,7 @@ import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IRecursive} from "../_types/AST/IRecursive";
 import {ICSTLeaf} from "../_types/CST/ICSTLeaf";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
-import {numberBaseFeature} from "./numberBaseFeature";
+import {numberBaseFeature} from "./number/numberBaseFeature";
 import {spaceToken, subtractToken} from "./tokens";
 import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";

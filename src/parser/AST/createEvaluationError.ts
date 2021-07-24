@@ -13,10 +13,16 @@ import {inputTextContextIdentifier} from "./inputTextContextIdentifier";
  * @returns The created error object
  */
 export function createEvaluationError<T extends object>(
-    {type, message, multilineMessage, source, extra}: IEvaluationErrorConfig<T>,
+    {
+        type,
+        message,
+        multilineMessage,
+        source,
+        range = source.range,
+        extra,
+    }: IEvaluationErrorConfig<T>,
     context: EvaluationContext
 ): IEvaluationErrorObject<IEvaluationError & T> {
-    const range = source.range;
     return createEvaluationErrorObject([
         {
             type,

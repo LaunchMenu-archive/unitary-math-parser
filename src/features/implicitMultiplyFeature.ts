@@ -5,7 +5,7 @@ import {IASTBase} from "../_types/AST/IASTBase";
 import {IASTExpression} from "../_types/AST/IASTExpression";
 import {IEvaluationErrorObject} from "../_types/evaluation/IEvaluationErrorObject";
 import {IUnit} from "../_types/evaluation/number/IUnit";
-import {numberBaseFeature} from "./numberBaseFeature";
+import {numberBaseFeature} from "./number/numberBaseFeature";
 import {powerFeature} from "./powerFeature";
 import {addToken, spaceToken, subtractToken} from "./tokens";
 import {createUnitaryValue} from "./util/createUnitaryValue";

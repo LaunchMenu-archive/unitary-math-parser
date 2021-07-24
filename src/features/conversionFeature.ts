@@ -12,47 +12,51 @@ import {number} from "./util/number/number";
 import {INumber} from "./util/number/_types/INumber";
 import {createUnitaryValue} from "./util/createUnitaryValue";
 import {IBinaryCSTData} from "./util/_types/IBinaryCSTData";
-import {spaceToken, unitConversionToken} from "./tokens";
+import {spaceToken, conversionToken} from "./tokens";
+import {valueFormat} from "./util/formats/valueFormat";
+import {IFormat} from "./util/formats/_types/IFormat";
+import {formatAugmentation} from "./util/formats/formatAugmentation";
 
 /**
- * The feature to convert from one unit to another when encountering `in`
+ * The feature to convert from one unit or format to another when encountering `in`
  */
-export const unitConversionFeature = createFeature<{
+export const conversionFeature = createFeature<{
     CST: IBinaryCSTData;
     AST: {
         value: IRecursive<IASTExpression>;
-        unit: IRecursive<IASTExpression>;
+        to: IRecursive<IASTExpression>;
     };
-    name: "unitConversion";
+    name: "conversion";
 }>({
-    name: "unitConversion",
+    name: "conversion",
     parse: {
-        tokens: [unitConversionToken, spaceToken],
+        tokens: [conversionToken, spaceToken],
         type: "infix",
         associativity: "left",
         exec(node, {nextRule, parser, createNode, createLeaf}) {
             const {addChild, finish} = createNode();
             addChild(node);
-            addChild(createLeaf(parser.consume(0, unitConversionToken)));
+            addChild(createLeaf(parser.consume(0, conversionToken)));
             addChild(parser.subrule(2, nextRule));
             return finish();
         },
         precedence: {lowerThan: [addFeature]},
     },
-    abstract: ({children: [value, op, unit]}) => ({value, unit}),
-    recurse: ({value, unit, ...rest}, recurse) => ({
+    abstract: ({children: [value, op, unit]}) => ({value, to: unit}),
+    recurse: ({value, to: unit, ...rest}, recurse) => ({
         value: recurse(value),
-        unit: recurse(unit),
+        to: recurse(unit),
         ...rest,
     }),
     evaluate: [
+        // Unit conversion
         createEvaluator(
-            {value: number, unit: number},
+            {value: number, to: number},
             (
-                node: {value: INumber; unit: INumber} & IASTBase,
+                node: {value: INumber; to: INumber} & IASTBase,
                 context: EvaluationContext
             ): INumber | IEvaluationErrorObject =>
-                createUnitaryValue(node, [node.value, node.unit], ([value, unit]) => {
+                createUnitaryValue(node, [node.value, node.to], ([value, unit]) => {
                     const unitCST = node.source.children[2];
                     if (!unit.isPureUnit) {
                         return createEvaluationError(
@@ -81,6 +85,30 @@ export const unitConversionFeature = createFeature<{
                         unit: unit.unit,
                     };
                 })
+        ),
+        // Format conversion
+        createEvaluator(
+            {value: number, to: valueFormat},
+            (
+                {value, to, source}: {value: INumber; to: IFormat} & IASTBase,
+                context: EvaluationContext
+            ): INumber | IEvaluationErrorObject => {
+                if (!value.isA(to.data.dataType)) {
+                    return createEvaluationError(
+                        {
+                            type: "invalidFormat",
+                            message: i =>
+                                `Received an incompatible format at index ${i}. Expected a format for a ${to.data.dataType.name}.`,
+                            multilineMessage: pm =>
+                                `Received an incompatible format:\n${pm}\nExpected a format for a ${to.data.dataType.name}`,
+                            source: source.children[2],
+                        },
+                        context
+                    );
+                }
+
+                return value.augment(formatAugmentation, to.data);
+            }
         ),
     ],
 });

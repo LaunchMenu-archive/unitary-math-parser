@@ -3,7 +3,7 @@ import {createBaseFeature} from "../createBaseFeature";
 import {addFeature} from "../features/addFeature";
 import {groupBaseFeature} from "../features/groupBaseFeature";
 import {multiplyFeature} from "../features/multiplyFeature";
-import {numberBaseFeature} from "../features/numberBaseFeature";
+import {numberBaseFeature} from "../features/number/numberBaseFeature";
 import {Parser} from "../Parser";
 import {TGetASTBaseBody} from "../_types/AST/TGetASTBaseBody";
 import {ICST} from "../_types/CST/ICST";

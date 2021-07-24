@@ -1,10 +1,13 @@
 import {IASTBase} from "../../../_types/AST/IASTBase";
+import {IDataType} from "./IDataType";
 import {IValue} from "./IValue";
 
 /** An augmentation for a data type in order to track extra data */
 export type IDataTypeAugmentation<V, A> = {
     /** The identifier of this augmentation */
     identifier: symbol;
+    /** The data type(s) that the augmentation is for */
+    dataType: IDataType<V>[];
     /**
      * Retrieves the augmentation of a value if none was provided
      * @param value The value that the augmentation is for

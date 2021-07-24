@@ -12,7 +12,7 @@ describe("Evaluation errors", () => {
             expectError("34 - 3 * 4 * +", [
                 {
                     message: pt =>
-                        `Found unexpected end of file:\n${pt}\nExpected either "+", "-", number, text, "(", "$" or "#"`,
+                        `Found unexpected end of file:\n${pt}\nExpected either "+", "-", formatted-number, text, "(", "$", "#", number, binary-number, hex-number or octal-number`,
                     start: parseInt("shit"),
                 },
             ]);
@@ -21,7 +21,7 @@ describe("Evaluation errors", () => {
             expectError("34 - 3 * * 4", [
                 {
                     message: pt =>
-                        `Found unexpected character "*":\n${pt}\nExpected either "+", "-", number, text, "(", "$" or "#"`,
+                        `Found unexpected character "*":\n${pt}\nExpected either "+", "-", formatted-number, text, "(", "$", "#", number, binary-number, hex-number or octal-number`,
                     start: 9,
                 },
             ]);

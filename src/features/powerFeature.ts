@@ -11,7 +11,7 @@ import {ILabeledPureUnit} from "../_types/evaluation/number/ILabeledPureUnit";
 import {IPureUnit} from "../_types/evaluation/number/IPureUnit";
 import {IUnit} from "../_types/evaluation/number/IUnit";
 import {IUnitFormat} from "../_types/evaluation/number/IUnitFormat";
-import {numberBaseFeature} from "./numberBaseFeature";
+import {numberBaseFeature} from "./number/numberBaseFeature";
 import {createInvalidUnitError} from "./util/createInvalidUnitError";
 import {getDimensionsString} from "./util/number/getDimensionsString";
 import {number} from "./util/number/number";

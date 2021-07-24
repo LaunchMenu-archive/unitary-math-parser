@@ -31,4 +31,6 @@ export interface IValue<V = any> {
      * @returns Whether this data is of the given type
      */
     isA<K>(type: IDataType<K>): this is IValue<K>;
+    /** @override */
+    toString(): string;
 }

@@ -1,6 +1,8 @@
 import {Unit} from "../features/util/number/Unit";
-import {decameter, kilometer} from "../features/util/number/units/lengths";
+import {decameter, kilometer, meter} from "../features/util/number/units/lengths";
+import {second} from "../features/util/number/units/times";
 import {unitLess} from "../features/util/number/units/unitLess";
+import {variableContextIdentifier} from "../features/variables/variableContextIdentifier";
 import {IUnit} from "../_types/evaluation/number/IUnit";
 import {expectResult} from "./resultCheck.helper";
 
@@ -32,6 +34,12 @@ describe("Random expressions", () => {
             expression: "year/day",
             value: 365,
             unit: unitLess,
+        },
+        {
+            expression: "0b1011 m/s + 0xF1 km/h in decimal",
+            value: 77.94444444444444,
+            unit: new Unit([meter], [second]),
+            config: {format: variableContextIdentifier.init().get("decimal")?.data},
         },
     ];
 

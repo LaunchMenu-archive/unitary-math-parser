@@ -1,4 +1,4 @@
-import {IToken, Lexer} from "chevrotain";
+import {IToken, Lexer, TokenType} from "chevrotain";
 import {IUnknownCharacterError} from "../../_types/errors/IUnknownCharacterError";
 import {IParserConfig} from "../../_types/IParserConfig";
 import {getSyntaxPointerMessage} from "../getSyntaxPointerMessage";
@@ -8,13 +8,35 @@ import {resolveTokenTypes} from "./CSTParserBase";
 export class Tokenizer {
     /** The lexer to tokenize the input */
     protected lexer: Lexer;
+    protected tokenTypes: TokenType[];
+    protected missingAltTokenTypes: TokenType[];
 
     /**
      * Creates a tokenizer for a given string input
      * @param config The configuration of the parser
      */
     public constructor(config: IParserConfig) {
-        this.lexer = new Lexer(resolveTokenTypes(config));
+        this.tokenTypes = resolveTokenTypes(config);
+
+        // Remove the `alt` property if alt isn't present in token set
+        this.missingAltTokenTypes = this.tokenTypes.filter(
+            t => t.LONGER_ALT && !this.tokenTypes.includes(t.LONGER_ALT)
+        );
+        this.missingAltTokenTypes.forEach(
+            (t: TokenType & {LONGER_ALT_BU?: TokenType}) => {
+                t.LONGER_ALT_BU = t.LONGER_ALT;
+                delete t.LONGER_ALT;
+            }
+        );
+
+        this.lexer = new Lexer(this.tokenTypes);
+
+        // Restore removed `alt` properties
+        this.missingAltTokenTypes.forEach(
+            (t: TokenType & {LONGER_ALT_BU?: TokenType}) => {
+                t.LONGER_ALT = t.LONGER_ALT_BU;
+            }
+        );
     }
 
     /**

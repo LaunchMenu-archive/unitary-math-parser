@@ -9,6 +9,8 @@ export type IEvaluationErrorConfig<T extends object | unknown = unknown> = {
     multilineMessage: (pointer: string) => string;
     /** The range that the error occured at */
     source: ICST;
+    /** The range of text where the error occurred */
+    range?: {start: number; end?: number};
     /** Additional optional data */
     extra?: T;
 };

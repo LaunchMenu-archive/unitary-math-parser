@@ -2,7 +2,7 @@ import {addFeature} from "./features/addFeature";
 import {groupRecoveryFeature} from "./features/groupRecovery/groupRecoveryFeature";
 import {functionBaseFeature} from "./features/functions/functionBaseFeature";
 import {multiplyFeature} from "./features/multiplyFeature";
-import {numberBaseFeature} from "./features/numberBaseFeature";
+import {numberBaseFeature} from "./features/number/numberBaseFeature";
 import {Parser} from "./Parser";
 import {groupRecoveryBaseFeature} from "./features/groupRecovery/groupRecoveryBaseFeature";
 import {ICST} from "./_types/CST/ICST";
@@ -15,21 +15,22 @@ import {EvaluationContext} from "./parser/AST/EvaluationContext";
 import {unitConfigContextIdentifier} from "./features/variables/unitConfigContextIdentifier";
 import {varBaseFeature} from "./features/variables/varBaseFeature";
 import {unitBaseFeature} from "./features/variables/unitBaseFeature";
-import {unitConversionFeature} from "./features/unitConversionFeature";
+import {conversionFeature} from "./features/conversionFeature";
 import {unarySubtractFeature} from "./features/unarySubtractFeature";
 import {unaryAddFeature} from "./features/unaryAddFeature";
 import {moduloFeature} from "./features/moduloFeature";
 import {powerFeature} from "./features/powerFeature";
 import {factorialFeature} from "./features/factorialFunction";
 import {number} from "./features/util/number/number";
-import {unitAugmentation} from "./features/util/number/unitAugmentation";
-import {approximationAugmentation} from "./features/util/number/approximationAugmentation";
+import {formattedNumberBaseFeature} from "./features/number/formattedNumberBaseFeature";
+import {binaryNumberBaseFeature} from "./features/number/binaryNumberBaseFeature";
+import {hexadecimalNumberBaseFeature} from "./features/number/hexadecimalNumberBaseFeature";
+import {octalNumberBaseFeature} from "./features/number/octalNumberBaseFeature";
+import {formatNumber} from "./features/util/number/formatNumber";
 
 // Things that remain to be done:
 // TODO: Add more units and dimensions, E.g. american units, hz, angles and temperatures
 // TODO: Add more functions, E.g. floor, ceil, max, min, sin, cos, log, root
-// TODO: Add value formats system
-// TODO: Create unit tests
 // TODO: Add date type
 // TODO: Add list type
 // TODO: Make a high level wrapper such that it's easy to use for the default case
@@ -43,7 +44,7 @@ const parser = new Parser({
         multiplyFeature,
         divideFeature,
         implicitMultiplyFeature,
-        unitConversionFeature,
+        conversionFeature,
         unarySubtractFeature,
         unaryAddFeature,
         moduloFeature,
@@ -51,16 +52,22 @@ const parser = new Parser({
         factorialFeature,
     ],
     baseFeatures: [
-        numberBaseFeature,
+        formattedNumberBaseFeature,
         functionBaseFeature,
         groupRecoveryBaseFeature,
         unitOrVarBaseFeature,
         varBaseFeature,
         unitBaseFeature,
+        numberBaseFeature,
+        binaryNumberBaseFeature,
+        hexadecimalNumberBaseFeature,
+        octalNumberBaseFeature,
     ],
 });
-const input = "4 meter second kg^-1";
-// const input = "(6meter)!";
+
+// const input = "(41 as hexadecimal)meter second kg^-1";
+// const input = "10.4";
+const input = "(1011 as binary) m/s + (F1 as hexadecimal) km/h in base5";
 const result = parser.parse(input);
 if ("errors" in result) {
     console.log(...result.errors.map(({multilineMessage}) => multilineMessage));
@@ -94,12 +101,9 @@ if ("errors" in result) {
     if (isError(evalResult)) {
         evalResult.errors.forEach(error => console.log(error.multilineMessage));
     } else if (evalResult.isA(number)) {
-        console.log(input + " =");
-        console.log(
-            evalResult.data,
-            evalResult.getAugmentation(unitAugmentation).unit + "",
-            evalResult.getAugmentation(approximationAugmentation)
-        );
+        const {value, approxEquals} = formatNumber(evalResult);
+        console.log(input + " " + (approxEquals ? "~=" : "="));
+        console.log(value);
     }
 }
 
