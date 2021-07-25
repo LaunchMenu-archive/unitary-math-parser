@@ -49,7 +49,7 @@ export const dotToken = createToken({
     label: '"."',
 });
 
-// Text types
+// Dynamic value types
 export const numberFormatToken = createToken({
     name: "FORMATTED-NUMBER",
     pattern: /(\w*\.)?\w+(e\-\w+)? as/i,
@@ -67,7 +67,7 @@ export const numberToken = createToken({
     label: "number",
     longer_alt: numberFormatToken,
 });
-// TODO: add a way of inserting this before the number token
+
 export const binaryNumberToken = createToken({
     name: "BINARY",
     pattern: /0b([0-1]*\.)?[0-1]+(e\-?[0-1]+)?/i,
@@ -85,6 +85,13 @@ export const hexNumberToken = createToken({
     pattern: /0x([0-9a-f]*\.)?[0-9a-f]+/i,
     label: "hex-number",
     before: [numberToken],
+});
+
+export const dateToken = createToken({
+    name: "DATE",
+    pattern:
+        /(\d+((\.|\:)\d+)?(pm|am)?)?\s*(\d+\-\d+\-\d+|\d+\/\d+\/\d+)\s*(\d+((\.|\:)\d+)?(pm|am)?)?/i,
+    label: "date",
 });
 
 // Keywords
