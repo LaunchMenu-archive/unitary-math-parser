@@ -6,19 +6,21 @@ This project was ultimately scrapped in favor of using [mathjs](https://mathjs.o
 
 ## Examples
 
-`(5km/hour - 1meter/second + .1km/hour)*20min` = `0.5 km`
-`150 * (100-30)%` = `105`
-`5km + 20meter + 3dam - 5m in dam` = `504.5 decameter`
-`0b1011 m/s + 0xF1 km/h in decimal` = ` 77.94444444444444 meter/second`
+-   `(5km/hour - 1meter/second + .1km/hour)*20min` = `0.5 km`
+-   `150 * (100-30)%` = `105`
+-   `5km + 20meter + 3dam - 5m in dam` = `504.5 decameter`
+-   `0b1011 m/s + 0xF1 km/h in decimal` = ` 77.94444444444444 meter/second`
 
 ### Syntax recovery
 
 `-4+4*2/2)+3`
+
 will suggest possible fixes:
-`(-4+4*2/2)+3`
-`-(4+4*2/2)+3`
-`-4+4*(2/2)+3`
-`-4+4*2/2+3`
+
+-   `(-4+4*2/2)+3`
+-   `-(4+4*2/2)+3`
+-   `-4+4*(2/2)+3`
+-   `-4+4*2/2+3`
 
 As can be seen above, it can automatically filter out suggestions where the brackets were redundant such as `-4+(4*2/2)+3`
 
