@@ -41,7 +41,11 @@ Pros of this library:
 Cons of this library:
 
 -   Code was starting to be a bit messy
--   I'm no longer happy with some decisions I made early on, but also don't want to invest time to redo everything
+-   I'm no longer happy with some decisions I made early on, but also don't want to invest time to redo everything. Non exhaustive list:
+    - organizing precedence by 'lower than' and 'equal to' properties
+    - using complex typescript type transformers for intellisense (since it's fragile)
+    - using string types in AST/CST rather than referencing the feature directly
+    - relying on an overarching 'parser' class rather than being able to use features as isolated modules
 
 Pros of Mathjs:
 
