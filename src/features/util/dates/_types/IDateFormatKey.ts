@@ -10,7 +10,7 @@ export type IDateFormatKey = {
     ):
         | {
               consumedLength: number;
-              parsed: IDateParts | {(parts: IDateParts): string | IDateParts};
+              parsed: IDateParts | IContextualDateParser;
           }
         | string;
 
@@ -29,4 +29,13 @@ export type IDateParts = {
     hour?: number;
     minute?: number;
     second?: number;
+};
+
+export type IContextualDateParser = {
+    /**
+     * Computes the new date parts from the given date parts
+     * @param parts THe current date parts
+     * @returns Either an error message or the new date parts
+     */
+    (parts: IDateParts): string | IDateParts;
 };

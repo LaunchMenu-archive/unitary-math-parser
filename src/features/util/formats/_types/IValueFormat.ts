@@ -19,5 +19,10 @@ export type IValueFormat<D = any> = {
      * @param value The value in this format to decode
      * @returns The value in the common format, or parsing error information
      */
-    decode(value: string): {value: D} | {unexpectedChar: string; index: number};
+    decode(value: string): IFormatDecodeResult<D>;
 };
+
+export type IFormatDecodeResult<D> =
+    | {value: D}
+    | {index: number; error: string}
+    | {index: number; unexpectedCharacter: string};
