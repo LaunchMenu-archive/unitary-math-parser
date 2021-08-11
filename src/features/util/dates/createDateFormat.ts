@@ -1,6 +1,7 @@
 import {IValueFormat} from "../formats/_types/IValueFormat";
 import {date} from "./date";
 import {IDateFormatKey} from "./_types/IDateFormatKey";
+import {dateDayFormatters} from "./formatters/dateDayFormatters";
 
 /**
  * Creates a new date format using PHP's standard: https://www.php.net/manual/en/datetime.format.php
@@ -23,10 +24,6 @@ export function createDateFormat(format: string): IValueFormat<Date> {
     };
 }
 
-//TODO: finish
-const characters: Record<string, IDateFormatKey> = {
-    // d: {
-    //     encode: date=>(date.getDate()+"").padStart(2, "0"),
-    //     decode: date=>()
-    // }
-};
+// TODO: add some kind of date language parameter
+
+const formatters: Record<string, IDateFormatKey> = {...dateDayFormatters};

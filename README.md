@@ -2,7 +2,7 @@
 
 A parser and evaluator for simple math expressions, with support for units and simple corrections
 
-This project was ultimately scrapped in favor of using [mathjs](https://mathjs.org/)
+This project will eventually be used for LaunchMenu's calculator, but for now LaunchMenu's calculator will use [mathjs](https://mathjs.org/).
 
 ## Examples
 
@@ -42,10 +42,10 @@ Cons of this library:
 
 -   Code was starting to be a bit messy
 -   I'm no longer happy with some decisions I made early on, but also don't want to invest time to redo everything. Non exhaustive list:
-    - organizing precedence by 'lower than' and 'equal to' properties
-    - using complex typescript type transformers for intellisense (since it's fragile)
-    - using string types in AST/CST rather than referencing the feature directly
-    - relying on an overarching 'parser' class rather than being able to use features as isolated modules
+    -   organizing precedence by 'lower than' and 'equal to' properties
+    -   using complex typescript type transformers for intellisense (since it's fragile)
+    -   using string types in AST/CST rather than referencing the feature directly
+    -   relying on an overarching 'parser' class rather than being able to use features as isolated modules
 
 Pros of Mathjs:
 
@@ -59,3 +59,6 @@ Cons of Mathjs:
 
 -   Uses `%` for modulo, making percentage usage more difficult
 -   Doesn't support custom syntax (as far as we can tell)
+-   TS support isn't amazing (but mostly adequate)
+-   Docs can be hard to navigate and understand (thought our lib will probably have even less extensive docs)
+-   Error information of the parser is very limited

@@ -3,20 +3,16 @@ export type IDateFormatKey = {
     /**
      * Decodes part of the date
      * @param date The remaining date string
-     * @returns The part that remains after applying this key, and the data that was extracted from it
+     * @returns The part that remains after applying this key, and the data that was extracted from it, or an error message if parsing failed
      */
-    decode(date: string): {
-        remainingDataString: string;
-        parsed: {
-            year?: number;
-            month?: number;
-            day?: number;
-            hour?: number;
-            minute?: number;
-            AM?: boolean;
-            second?: number;
-        };
-    };
+    decode(
+        date: string
+    ):
+        | {
+              consumedLength: number;
+              parsed: IDateParts | {(parts: IDateParts): string | IDateParts};
+          }
+        | string;
 
     /**
      * Encodes part of the date to a string
@@ -24,4 +20,13 @@ export type IDateFormatKey = {
      * @returns The encoded string part
      */
     encode(date: Date): string;
+};
+
+export type IDateParts = {
+    year?: number;
+    month?: number;
+    day?: number;
+    hour?: number;
+    minute?: number;
+    second?: number;
 };
