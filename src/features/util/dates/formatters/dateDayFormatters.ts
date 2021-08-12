@@ -92,7 +92,7 @@ export const dateDayFormatters: Record<string, IDateFormatKey> = {
             };
         },
     },
-    /* SO-8601 numeric representation of the day of the week	1 (for Monday) through 7 (for Sunday) */
+    /* ISO-8601 numeric representation of the day of the week	1 (for Monday) through 7 (for Sunday) */
     N: {
         encode: date => date.getDay() + "",
         decode: dateStr => {
@@ -161,7 +161,7 @@ export function getDayOfYear(date: Date): number {
     const y = date.getFullYear();
     return (
         getDaysPerMonth(y)
-            .slice(0, date.getMonth() - 1)
+            .slice(0, date.getMonth())
             .reduce((a, b) => a + b, 0) +
         (date.getDate() - 1)
     );
@@ -181,7 +181,7 @@ export function computeDateFromDayOfYear(
     const months = getDaysPerMonth(year);
     for (let i = 0; i < months.length; i++) {
         const days = months[i];
-        if (days >= d) return {day: d, month: i + 1};
+        if (days >= d) return {day: d, month: i};
         d -= days;
     }
     return "Year wasn't a leap year";
@@ -198,11 +198,11 @@ function createDayOfWeekParser(day: number) {
             return "Can't compute the day without the year being present";
         const month = dateParts.month ?? 0;
         const date = new Date(`${dateParts.year}-${month + 1}-1`);
-        const startDay = date.getDay();
+        const startDay = date.getDay() - 1;
         const delta = (day - startDay + 7) % 7;
 
         return {
-            day: delta,
+            day: 1 + delta,
         };
     };
 }

@@ -16,7 +16,7 @@ export const dateWeekFormatters: Record<string, IDateFormatKey> = {
         decode: dateStr => {
             const weekString = dateStr.match(/\d{1,2}/);
             const week = Number(weekString?.[0]);
-            if (isNaN(week) || week < 1 || week > 52)
+            if (isNaN(week) || week < 1 || week > 53)
                 return "Expected a week of the year between 1 and 52";
 
             return {
@@ -35,13 +35,21 @@ export const dateWeekFormatters: Record<string, IDateFormatKey> = {
 
                     // Determine what day of the year that is, and what week it falls in
                     const dayOfYear = getDayOfYear(specifiedDate);
-                    const specifiedWeek = calculate0BasedWeekNumber(
+                    let specifiedWeek = calculate0BasedWeekNumber(
                         dateParts.year,
                         dayOfYear
                     );
 
                     // Add or subtract a number of days to reach the correct week, and obtain the new month and day of the month
-                    const newDayOfYear = (week - specifiedWeek) * 7 + dayOfYear;
+                    let newDayOfYear = (week - specifiedWeek) * 7 + dayOfYear;
+
+                    // Make sure that if an unreachable week is specified, it's interpreted as the last week of the previous year (or week 0 of this year)
+                    const lastDayOfYear = getDaysPerMonth(dateParts.year).reduce(
+                        (a, b) => a + b
+                    );
+                    if (newDayOfYear > lastDayOfYear) newDayOfYear = dayOfYear;
+
+                    // Compute the date from the year and day of year
                     return computeDateFromDayOfYear(dateParts.year, newDayOfYear);
                 },
                 consumedLength: weekString![0].length,

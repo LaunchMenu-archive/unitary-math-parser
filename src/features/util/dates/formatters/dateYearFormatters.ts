@@ -4,10 +4,10 @@ import {calculate0BasedWeekNumber} from "./dateWeekFormatters";
 
 export const dateYearFormatters: Record<string, IDateFormatKey> = {
     /* Whether it's a leap year	   1 if it is a leap year, 0 otherwise. */
-    F: {
+    L: {
         encode: date => (isLeapYear(date.getFullYear()) ? "1" : "0"),
         decode: dateStr => {
-            if (["0", "1"].includes(dateStr[0]))
+            if (!["0", "1"].includes(dateStr[0]))
                 return "Expected an indicator of it being a leap year, 1 or 0";
 
             return {
