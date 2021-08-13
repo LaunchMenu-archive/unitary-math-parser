@@ -1,5 +1,6 @@
 import {createDateFormat} from "../createDateFormat";
 import {IFormatDecodeResult} from "../../formats/_types/IValueFormat";
+import {EvaluationContext} from "../../../../parser/AST/EvaluationContext";
 
 function expectDate(result: IFormatDecodeResult<Date>, date: Date) {
     if ("value" in result) {
@@ -8,16 +9,17 @@ function expectDate(result: IFormatDecodeResult<Date>, date: Date) {
         expect(result).toEqual(undefined);
     }
 }
+const context = new EvaluationContext();
 
 describe("createDateFormatter", () => {
     describe("Formatting", () => {
         it("Should handle simple date formatting", () => {
             const date = new Date("2019-5-15");
             const format = createDateFormat("d/m/Y");
-            expect(format.encode(date)).toEqual("15/05/2019");
+            expect(format.encode(date, context)).toEqual("15/05/2019");
 
             const format2 = createDateFormat("y-n-j");
-            expect(format2.encode(date)).toEqual("19-5-15");
+            expect(format2.encode(date, context)).toEqual("19-5-15");
         });
         describe("Should handle all symbols", () => {
             const dates = [
@@ -54,7 +56,7 @@ describe("createDateFormatter", () => {
                 it(`Should handle '${key}'`, () => {
                     const format = createDateFormat(key);
                     dates.forEach((date, i) => {
-                        expect(format.encode(date)).toEqual(results[i]);
+                        expect(format.encode(date, context)).toEqual(results[i]);
                     });
                 });
             }
@@ -63,14 +65,14 @@ describe("createDateFormatter", () => {
             const date = new Date("2010-1-2");
 
             const format = createDateFormat("l, jS \\o\\f F Y");
-            expect(format.encode(date)).toEqual("Saturday, 2nd of January 2010");
+            expect(format.encode(date, context)).toEqual("Saturday, 2nd of January 2010");
         });
     });
     describe("parsing", () => {
         it("Should handle simple date parsing", () => {
             const date = new Date("2019-5-15");
             const format = createDateFormat("d/m/Y");
-            expectDate(format.decode("15/05/2019"), date);
+            expectDate(format.decode("15/05/2019", context), date);
         });
         describe("Should handle all symbols", () => {
             const dates = [
@@ -111,7 +113,7 @@ describe("createDateFormatter", () => {
                 it(`Should handle '${key}'`, () => {
                     const format = createDateFormat(formatText);
                     dates.forEach((date, i) => {
-                        expectDate(format.decode(results[i]), date);
+                        expectDate(format.decode(results[i], context), date);
                     });
                 });
             }
@@ -120,8 +122,24 @@ describe("createDateFormatter", () => {
             const date = new Date("2010-1-2");
 
             const format = createDateFormat("l, jS \\o\\f F Y");
-            expectDate(format.decode("Saturday, 2nd of January 2010"), date);
+            expectDate(format.decode("Saturday, 2nd of January 2010", context), date);
         });
     });
-    describe("Error handling", () => {});
+    describe("Error handling", () => {
+        it("Should create a parsing error if the wrong kind of data is found", () => {
+            const format1 = createDateFormat("d F Y");
+            expect(format1.decode("15 9 2020", context)).toEqual({
+                index: 3,
+                errorType: "F",
+                errorMessage: "Expected a full month representation, E.g. January",
+            });
+
+            const format2 = createDateFormat("j-m-Y");
+            expect(format2.decode("150-9-2020", context)).toEqual({
+                index: 2,
+                errorType: "-",
+                errorMessage: `Expected the symbol "-"`,
+            });
+        });
+    });
 });

@@ -1,17 +1,5 @@
 import {IDateFormatKey, IDateParts} from "../_types/IDateFormatKey";
 
-const dayOfWeekShort = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const dayOfWeek = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-];
-const ordinalSuffix = ["th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th"];
-
 /**
  * Checks whether a given year is a leap year
  * @param y The year to be checked
@@ -48,18 +36,14 @@ export const dateDayFormatters: Record<string, IDateFormatKey> = {
     },
     /* A textual representation of a day, three letters	    Mon through Sun */
     D: {
-        encode: date => dayOfWeekShort[date.getDay() - 1],
-        decode: dateStr => {
-            const day = dayOfWeekShort.findIndex(
-                text =>
-                    dateStr.substring(0, text.length).toLowerCase() == text.toLowerCase()
-            );
-            if (day == -1)
-                return "Expected a three letter representation of the day of the week, E.g. Fri";
+        encode: (date, texts) => texts.daysOfWeekShort.format(date.getDay() - 1),
+        decode: (dateStr, texts) => {
+            const day = texts.daysOfWeekShort.parse(dateStr);
+            if (!day)
+                return `Expected a three letter representation of the day of the week, E.g. ${texts.daysOfWeekShort.example}`;
             return {
-                // TODO: add parser
-                parsed: createDayOfWeekParser(day),
-                consumedLength: 3,
+                parsed: createDayOfWeekParser(day.index),
+                consumedLength: day.text.length,
             };
         },
     },
@@ -79,16 +63,13 @@ export const dateDayFormatters: Record<string, IDateFormatKey> = {
     },
     /* A full textual representation of the day of the week    Sunday through Saturday */
     l: {
-        encode: date => dayOfWeek[date.getDay() - 1],
-        decode: dateStr => {
-            const day = dayOfWeek.findIndex(
-                text =>
-                    dateStr.substring(0, text.length).toLowerCase() == text.toLowerCase()
-            );
-            if (day == -1) return "Expected a day of the week, E.g. Friday";
+        encode: (date, texts) => texts.daysOfWeek.format(date.getDay() - 1),
+        decode: (dateStr, texts) => {
+            const day = texts.daysOfWeek.parse(dateStr);
+            if (!day) return `Expected a day of the week, E.g. Friday`;
             return {
-                parsed: createDayOfWeekParser(day),
-                consumedLength: dayOfWeek[day].length,
+                parsed: createDayOfWeekParser(day.index),
+                consumedLength: day.text.length,
             };
         },
     },
@@ -107,13 +88,14 @@ export const dateDayFormatters: Record<string, IDateFormatKey> = {
     },
     /* English ordinal suffix for the day of the month, 2 characters	st, nd, rd or th. Works well with j */
     S: {
-        encode: date => ordinalSuffix[date.getDate() % 10],
-        decode: dateStr => {
-            const matches = dateStr.substring(0, 2).match(/th|st|nd|rd|/);
-            if (!matches) return "Expected a ordinal suffix such as 'th'";
+        encode: (date, texts) => texts.ordinalSuffix.format(date.getDate()),
+        decode: (dateStr, texts) => {
+            const matches = texts.ordinalSuffix.parse(dateStr);
+            if (!matches)
+                return `Expected a ordinal suffix such as '${texts.ordinalSuffix.example}'`;
             return {
                 parsed: {},
-                consumedLength: 2,
+                consumedLength: matches.text.length,
             };
         },
     },

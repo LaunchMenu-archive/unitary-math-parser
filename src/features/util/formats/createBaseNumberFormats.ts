@@ -58,8 +58,10 @@ export function createNumberBaseValueFormat(base: number, name: string = `base${
             const index = getInvalidCharPos(value, base);
             if (index != undefined)
                 return {
+                    errorType: "unexpectedChar",
                     unexpectedChar: value[index],
                     index: index,
+                    errorMessage: `Found unexpected character ${value[index]}`,
                 };
 
             const result = parseFloat(value, base);

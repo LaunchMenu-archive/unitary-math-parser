@@ -94,15 +94,15 @@ if ("errors" in result) {
     }
 
     console.time("eval");
-    const evalResult = parser.evaluate(
-        input,
-        new EvaluationContext().augment(unitConfigContextIdentifier, {customUnits: true})
-    );
+    const context = new EvaluationContext().augment(unitConfigContextIdentifier, {
+        customUnits: true,
+    });
+    const evalResult = parser.evaluate(input, context);
     console.timeEnd("eval");
     if (isError(evalResult)) {
         evalResult.errors.forEach(error => console.log(error.multilineMessage));
     } else if (evalResult.isA(number)) {
-        const {value, approxEquals} = formatNumber(evalResult);
+        const {value, approxEquals} = formatNumber(evalResult, context);
         console.log(input + " " + (approxEquals ? "~=" : "="));
         console.log(value);
     }

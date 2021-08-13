@@ -1,10 +1,12 @@
-import {IValueFormat} from "../formats/_types/IValueFormat";
+import {IFormatDecodeError, IValueFormat} from "../formats/_types/IValueFormat";
 import {date} from "./date";
 import {IDateFormatKey, IContextualDateParser, IDateParts} from "./_types/IDateFormatKey";
 import {dateDayFormatters} from "./formatters/dateDayFormatters";
 import {dateMonthFormatters} from "./formatters/dateMonthFormatters";
 import {dateWeekFormatters} from "./formatters/dateWeekFormatters";
 import {dateYearFormatters} from "./formatters/dateYearFormatters";
+import {dateLanguageTextContextIdentifier} from "./dateLanguageTextContextIdentifier";
+import {EvaluationContext} from "../../../parser/AST/EvaluationContext";
 
 /**
  * Creates a new date format using PHP's standard: https://www.php.net/manual/en/datetime.format.php
@@ -15,42 +17,55 @@ export function createDateFormat(format: string): IValueFormat<Date> {
     const formatters =
         format.match(/(\\.|.)/g)?.map(symbol => {
             const char = symbol.slice(-1); // Gets the last character (character may be prefixed with \)
-            if (symbol.length == 1 && allFormatters[char]) return allFormatters[char];
-            return createLiteralFormatter(char);
+            if (symbol.length == 1 && allFormatters[char])
+                return {symbol, formatter: allFormatters[char]};
+            return {symbol, formatter: createLiteralFormatter(char)};
         }) ?? [];
 
     return {
         dataType: date,
         name: format,
         identifier: Symbol(format),
-        decode: (date: string) => {
-            const parsers: {index: number; parser: IContextualDateParser}[] = [];
+        decode: (date, context = new EvaluationContext()) => {
+            const languageTexts = context.get(dateLanguageTextContextIdentifier);
+
+            const parsers: {
+                index: number;
+                parser: IContextualDateParser;
+                symbol: string;
+            }[] = [];
             let dateParts: IDateParts = {};
             let remainingDate = date;
             let index = 0;
 
             // Go through all formatters/parsers
-            for (let formatter of formatters) {
-                const parsed = formatter.decode(remainingDate);
-                if (typeof parsed == "string") return {index, error: parsed};
+            for (let {symbol, formatter} of formatters) {
+                const parsed = formatter.decode(remainingDate, languageTexts);
+                if (typeof parsed == "string")
+                    return {index, errorMessage: parsed, errorType: symbol};
 
                 index += parsed.consumedLength;
                 remainingDate = remainingDate.substring(parsed.consumedLength);
 
                 if (parsed.parsed instanceof Function)
-                    parsers.push({parser: parsed.parsed, index});
+                    parsers.push({parser: parsed.parsed, index, symbol});
                 else dateParts = {...dateParts, ...parsed.parsed};
             }
 
             // Execute the contextual parsers
             outer: while (parsers.length > 0) {
-                let errorMessage: {index: number; error: string} | undefined;
+                let errorMessage: IFormatDecodeError | undefined;
                 for (let parserIndex = 0; parserIndex < parsers.length; parserIndex++) {
-                    const {index, parser} = parsers[parserIndex];
+                    const {index, parser, symbol} = parsers[parserIndex];
                     const parsed = parser(dateParts);
 
                     if (typeof parsed == "string") {
-                        if (!errorMessage) errorMessage = {index, error: parsed};
+                        if (!errorMessage)
+                            errorMessage = {
+                                index,
+                                errorMessage: parsed,
+                                errorType: symbol,
+                            };
                     } else {
                         dateParts = {...dateParts, ...parsed};
                         parsers.splice(parserIndex, 1);
@@ -62,7 +77,12 @@ export function createDateFormat(format: string): IValueFormat<Date> {
             }
 
             // Compute the date
-            if (!dateParts.year) return {index: 0, error: "No year was specified"};
+            if (!dateParts.year)
+                return {
+                    index: 0,
+                    errorType: "noYear",
+                    errorMessage: "No year was specified",
+                };
             return {
                 value: new Date(
                     `${dateParts.year}-${(dateParts.month ?? 0) + 1}-${
@@ -73,8 +93,12 @@ export function createDateFormat(format: string): IValueFormat<Date> {
                 ),
             };
         },
-        encode: (date: Date) =>
-            formatters.map(formatter => formatter.encode(date)).join(""),
+        encode: (date, context = new EvaluationContext()) => {
+            const languageTexts = context.get(dateLanguageTextContextIdentifier);
+            return formatters
+                .map(({formatter}) => formatter.encode(date, languageTexts))
+                .join("");
+        },
     };
 }
 

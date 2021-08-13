@@ -1,12 +1,16 @@
+import {IDateLanguageTexts} from "./IDateLanguageTexts";
+
 /** A part of a date format */
 export type IDateFormatKey = {
     /**
      * Decodes part of the date
      * @param date The remaining date string
+     * @param texts The language texts that can be used
      * @returns The part that remains after applying this key, and the data that was extracted from it, or an error message if parsing failed
      */
     decode(
-        date: string
+        date: string,
+        texts: IDateLanguageTexts
     ):
         | {
               consumedLength: number;
@@ -17,9 +21,10 @@ export type IDateFormatKey = {
     /**
      * Encodes part of the date to a string
      * @param date THe date to encode data from
+     * @param texts The language texts that can be used
      * @returns The encoded string part
      */
-    encode(date: Date): string;
+    encode(date: Date, texts: IDateLanguageTexts): string;
 };
 
 export type IDateParts = {
