@@ -10,6 +10,10 @@ export type IDateLanguageTexts = {
     monthsShort: ILanguageTextChecker;
     /** January through December */
     months: ILanguageTextChecker;
+    /** Lowercase am or pm, I don't think these are ever translated, but just in case*/
+    amOrPm: ILanguageTextChecker;
+    /** Uppercase AM or PM, I don't think these are ever translated, but just in case*/
+    AMorPM: ILanguageTextChecker;
 };
 
 export type ILanguageTextChecker = {

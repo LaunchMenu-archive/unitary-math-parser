@@ -7,6 +7,7 @@ import {dateWeekFormatters} from "./formatters/dateWeekFormatters";
 import {dateYearFormatters} from "./formatters/dateYearFormatters";
 import {dateLanguageTextContextIdentifier} from "./dateLanguageTextContextIdentifier";
 import {EvaluationContext} from "../../../parser/AST/EvaluationContext";
+import {dateTimeFormatters} from "./formatters/dateTimeFormatters";
 
 /**
  * Creates a new date format using PHP's standard: https://www.php.net/manual/en/datetime.format.php
@@ -76,16 +77,16 @@ export function createDateFormat(format: string): IValueFormat<Date> {
                 if (errorMessage) return errorMessage;
             }
 
-            // Compute the date
-            if (!dateParts.year)
-                return {
-                    index: 0,
-                    errorType: "noYear",
-                    errorMessage: "No year was specified",
-                };
+            // // Compute the date
+            // if (!dateParts.year)
+            //     return {
+            //         index: 0,
+            //         errorType: "noYear",
+            //         errorMessage: "No year was specified",
+            //     };
             return {
                 value: new Date(
-                    `${dateParts.year}-${(dateParts.month ?? 0) + 1}-${
+                    `${dateParts.year ?? 1970}-${(dateParts.month ?? 0) + 1}-${
                         dateParts.day ?? 1
                     } ${dateParts.hour ?? 0}:${dateParts.minute ?? 0}:${
                         dateParts.second ?? 0
@@ -124,4 +125,5 @@ export const allFormatters: Record<string, IDateFormatKey> = {
     ...dateMonthFormatters,
     ...dateWeekFormatters,
     ...dateYearFormatters,
+    ...dateTimeFormatters,
 };

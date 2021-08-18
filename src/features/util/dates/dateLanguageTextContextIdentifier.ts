@@ -56,5 +56,7 @@ export const dateLanguageTextContextIdentifier = createEvaluationContextIdentifi
             "November",
             "December",
         ]),
+        amOrPm: createLanguageTextChecker(["am", "pm"]),
+        AMorPM: createLanguageTextChecker(["AM", "PM"]),
     })
 );
