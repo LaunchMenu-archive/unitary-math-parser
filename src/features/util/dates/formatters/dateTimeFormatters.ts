@@ -42,7 +42,7 @@ export const dateTimeFormatters: Record<string, IDateFormatKey> = {
     },
     /** Swatch Internet time	000 through 999 */
     B: {
-        // TODO: accommodate for timezone (subtract timezone when encoding)
+        // TODO: accommodate for timezone (subtract timezone when encoding, CET)
         encode: date =>
             (
                 Math.floor(((date.getHours() + date.getMinutes() / 60) / 24) * 1000) + ""
